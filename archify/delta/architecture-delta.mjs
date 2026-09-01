@@ -151,7 +151,7 @@ function fieldChanges(before, after, groups) {
 const COMPONENT_FIELDS = {
   semantic: ['type', 'label', 'sublabel', 'tag'],
   evidence: ['sources'],
-  geometry: ['row', 'col', 'pos', 'size'],
+  geometry: ['row', 'col', 'pos', 'size', 'rank', 'group', 'side'],
 };
 const CONNECTION_FIELDS = {
   topology: ['from', 'to'],
