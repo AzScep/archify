@@ -7,7 +7,7 @@ import {
   autoLayout, sizeComponent, textWidthAtPreferred, widthBudget, autoOptions, separateBoundaries,
 } from '../renderers/architecture/auto-layout.mjs';
 import { fittedNodeFontSize } from '../renderers/shared/text-fit.mjs';
-import { rectsOverlap } from '../renderers/shared/geometry.mjs';
+import { rectsOverlap, segmentIntersectsRect } from '../renderers/shared/geometry.mjs';
 
 const doc = (components, connections = [], extra = {}) => ({
   schema_version: 1,
@@ -143,6 +143,7 @@ test('separateBoundaries is a no-op when nothing intrudes', () => {
 // ---- repair passes ----------------------------------------------------------
 
 import { countRouteCrossings, enforceSeparation } from '../renderers/architecture/auto-layout.mjs';
+import { createRouter } from '../renderers/architecture/routing.mjs';
 
 test('enforceSeparation restores the 8px minimum after boxes are moved', () => {
   // separateBoundaries shifts whole member sets after vertical assignment, so
@@ -203,4 +204,63 @@ test('a component outside every boundary stays outside its frame', () => {
   const enclosed = auth.x >= frame.x && auth.x + auth.width <= frame.right
     && auth.y >= frame.y && auth.y + auth.height <= frame.bottom;
   assert.ok(!enclosed, 'a non-member must not end up inside the frame');
+});
+
+// ---- corridor reservation ---------------------------------------------------
+
+test('an edge spanning several ranks keeps a lane clear of components', () => {
+  // The stand-ins for a long edge are only a reservation once they are aligned
+  // with the edge they represent; unaligned they never move and the router
+  // drives the edge straight through whatever component sits in the way.
+  // This is the guarantee - a clear lane. Crossing repair is separate, and
+  // only swaps real components, so it cannot always straighten a corridor.
+  const components = ['a', 'b', 'c', 'd', 'blocker'].map((id) => node(id));
+  const connections = [
+    { from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'c', to: 'd' },
+    { from: 'a', to: 'd' }, { from: 'b', to: 'blocker' },
+  ];
+  const plan = autoLayout(doc(components, connections));
+  const { pathFor } = createRouter(plan.components, plan.connections);
+  for (const conn of plan.connections) {
+    const points = pathFor(conn).points;
+    for (const [id, box] of plan.components) {
+      if (id === conn.from || id === conn.to) continue;
+      for (let i = 0; i + 1 < points.length; i += 1) {
+        const segment = { start: points[i], end: points[i + 1] };
+        assert.ok(!segmentIntersectsRect(segment, box, 2),
+          `${conn.from}->${conn.to} runs through ${id}`);
+      }
+    }
+  }
+});
+
+test('a return path is laid out without crossing the forward flow', () => {
+  const components = ['a', 'b', 'c', 'd'].map((id) => node(id));
+  const connections = [
+    { from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'c', to: 'd' },
+    { from: 'd', to: 'b' }, // the return path, three ranks backwards
+  ];
+  const plan = autoLayout(doc(components, connections));
+  assert.equal(countRouteCrossings(plan.components, plan.connections), 0);
+  assert.ok(['top', 'bottom'].includes(plan.returnLane));
+});
+
+test('the return lane is chosen by measurement, and can be pinned', () => {
+  const components = ['a', 'b', 'c'].map((id) => node(id));
+  const connections = [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'c', to: 'a' }];
+  const arch = doc(components, connections);
+  arch.layout = { mode: 'auto', returnLane: 'top' };
+  assert.equal(autoLayout(arch).returnLane, 'top');
+});
+
+test('a busier rank gap is given more room than a quiet one', () => {
+  // Each edge that changes row across a gap needs its own vertical channel.
+  const gapFor = (extra) => {
+    const components = ['a', 'b', ...extra].map((id) => node(id));
+    const connections = [{ from: 'a', to: 'b' }, ...extra.map((id) => ({ from: id, to: 'b' }))];
+    const plan = autoLayout(doc(components, connections));
+    const a = plan.components.get('a'); const b = plan.components.get('b');
+    return b.x - (a.x + a.width);
+  };
+  assert.ok(gapFor(['x', 'y', 'z']) > gapFor([]), 'a gap crossed by four edges must exceed one crossed by a single edge');
 });

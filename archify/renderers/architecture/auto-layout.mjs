@@ -38,6 +38,8 @@ export const AUTO_DEFAULTS = {
   labelGap: 8,
   /** Vertical lane a spanning edge reserves on the ranks it crosses. */
   corridor: 16,
+  /** Horizontal channel each additional edge crossing a rank gap needs. */
+  channel: 14,
 };
 
 export function autoOptions(arch) {
@@ -101,7 +103,22 @@ export function rankCentres(layers, sizes, graph, rank, options) {
 
   const constraints = [];
   for (let r = 1; r < count; r += 1) {
-    constraints.push({ from: r - 1, to: r, minimum: Math.max(options.rankPitch, widest[r - 1] + options.rankGap + widest[r]) });
+    // Every edge crossing this gap that has to change row needs its own
+    // vertical channel in it. Routing is greedy and sequential, so once the
+    // channels run out the router exhausts its candidates and falls back to a
+    // route it already knows is bad - a diagonal the orthogonal-arrows check
+    // then rejects. Widening the gap is what buys the channels.
+    const crossing = graph.edges.filter((edge) => {
+      const lo = Math.min(rank[edge.from], rank[edge.to]);
+      const hi = Math.max(rank[edge.from], rank[edge.to]);
+      return lo <= r - 1 && hi >= r;
+    }).length;
+    const channels = Math.max(0, crossing - 1) * options.channel;
+    constraints.push({
+      from: r - 1,
+      to: r,
+      minimum: Math.max(options.rankPitch, widest[r - 1] + options.rankGap + channels + widest[r]),
+    });
   }
   for (const edge of graph.edges) {
     const [lo, hi] = [rank[edge.from], rank[edge.to]].sort((a, b) => a - b);
@@ -136,12 +153,15 @@ export function rankCentres(layers, sizes, graph, rank, options) {
  * same axis route as a straight two-point path, which is optimal on every
  * route-budget metric at once (no bends, no stretch, no short segments).
  */
-export function rankOffsets(layers, sizes, graph, options, passes = 3) {
-  const heightOf = (entry) => (entry.node === null ? 0 : sizes.get(graph.nodes[entry.node].id).height);
+export function rankOffsets(layers, sizes, graph, rank, options, passes = 3) {
+  const heightOf = (entry) => (entry.node === null
+    ? options.corridor
+    : sizes.get(graph.nodes[entry.node].id).height);
+
   const cys = layers.map((layer) => {
     let cursor = options.margin;
     return layer.map((entry) => {
-      const h = entry.node === null ? options.corridor : heightOf(entry);
+      const h = heightOf(entry);
       const centre = cursor + h / 2;
       cursor += h + options.nodeGapY;
       return centre;
@@ -150,22 +170,34 @@ export function rankOffsets(layers, sizes, graph, options, passes = 3) {
 
   const keyIndex = new Map();
   layers.forEach((layer, r) => layer.forEach((entry, i) => keyIndex.set(entry.key, [r, i])));
-  const linksFor = (entry) => {
-    if (entry.node === null) return [];
-    const id = graph.nodes[entry.node].index;
-    return graph.edges
-      .filter((e) => e.from === id || e.to === id)
-      .map((e) => `n${e.from === id ? e.to : e.from}`)
-      .map((k) => keyIndex.get(k))
-      .filter(Boolean);
+
+  // Adjacency over the expanded graph: an edge spanning several ranks is a run
+  // of hops through its own stand-ins, not one long jump. Aligning those hops
+  // is what turns a stand-in from a bookkeeping entry into a real reservation -
+  // the row it occupies is then held clear of components across every rank the
+  // edge crosses, which is the corridor the router needs. Without it the
+  // stand-ins never move, and the router drives the edge through whatever
+  // component happens to sit in the way.
+  const links = new Map([...keyIndex.keys()].map((k) => [k, []]));
+  const join = (a, b) => {
+    if (a === b || !links.has(a) || !links.has(b)) return;
+    links.get(a).push(b);
+    links.get(b).push(a);
   };
+  for (const edge of graph.edges) {
+    const [lo, hi] = [rank[edge.from], rank[edge.to]].sort((a, b) => a - b);
+    const chain = [];
+    for (let r = lo + 1; r < hi; r += 1) if (keyIndex.has(`v${edge.index}_${r}`)) chain.push(`v${edge.index}_${r}`);
+    const forward = rank[edge.from] <= rank[edge.to];
+    const ends = forward ? [`n${edge.from}`, `n${edge.to}`] : [`n${edge.to}`, `n${edge.from}`];
+    const path = [ends[0], ...chain, ends[1]];
+    for (let i = 0; i + 1 < path.length; i += 1) join(path[i], path[i + 1]);
+  }
 
   const separate = (r) => {
-    const layer = layers[r];
-    for (let i = 1; i < layer.length; i += 1) {
-      const prevH = layer[i - 1].node === null ? options.corridor : heightOf(layer[i - 1]);
-      const thisH = layer[i].node === null ? options.corridor : heightOf(layer[i]);
-      const floor = cys[r][i - 1] + prevH / 2 + options.nodeGapY + thisH / 2;
+    for (let i = 1; i < layers[r].length; i += 1) {
+      const floor = cys[r][i - 1] + heightOf(layers[r][i - 1]) / 2
+        + options.nodeGapY + heightOf(layers[r][i]) / 2;
       if (cys[r][i] < floor) cys[r][i] = floor;
     }
   };
@@ -173,17 +205,18 @@ export function rankOffsets(layers, sizes, graph, options, passes = 3) {
   for (let pass = 0; pass < passes; pass += 1) {
     for (let r = 0; r < layers.length; r += 1) {
       layers[r].forEach((entry, i) => {
-        const near = linksFor(entry).map(([nr, ni]) => cys[nr][ni]);
-        if (near.length) {
-          near.sort((a, b) => a - b);
-          const mid = near.length >> 1;
-          cys[r][i] = near.length % 2 ? near[mid] : (near[mid - 1] + near[mid]) / 2;
-        }
+        const near = links.get(entry.key)
+          .map((key) => keyIndex.get(key))
+          .filter(Boolean)
+          .map(([nr, ni]) => cys[nr][ni]);
+        if (!near.length) return;
+        near.sort((a, b) => a - b);
+        const mid = near.length >> 1;
+        cys[r][i] = near.length % 2 ? near[mid] : (near[mid - 1] + near[mid]) / 2;
       });
-      // Order is decided; alignment may not reshuffle it.
-      const order = layers[r].map((_, i) => i).sort((a, b) => cys[r][a] - cys[r][b] || a - b);
-      const sorted = order.map((i) => cys[r][i]);
-      order.forEach((_, i) => { cys[r][i] = sorted[i]; });
+      // Order is decided; alignment may only change spacing, never sequence.
+      const sorted = [...cys[r]].sort((a, b) => a - b);
+      for (let i = 0; i < cys[r].length; i += 1) cys[r][i] = sorted[i];
       separate(r);
     }
   }
@@ -568,50 +601,76 @@ export function autoLayout(arch, problems = []) {
 
   const graph = buildGraph(components, connections);
   const rank = assignRanks(graph, breakCycles(graph), problems);
-  const layers = orderRanks(graph, rank);
-
   const sizes = new Map(components.map((c) => [c.id, sizeComponent(c, options)]));
-  const place = (opts) => {
-    const centres = rankCentres(layers, sizes, graph, rank, opts);
-    const offsets = rankOffsets(layers, sizes, graph, opts);
-    const boxes = new Map();
-    layers.forEach((layer, r) => layer.forEach((entry, i) => {
-      if (entry.node === null) return;
-      const component = components[entry.node];
-      const size = sizes.get(component.id);
-      // An authored pos is an absolute pin; the solver places around it.
-      const pinned = Array.isArray(component.pos) && component.pos.length === 2;
-      const x = pinned ? component.pos[0] : Math.round(centres[r] - size.width / 2);
-      const y = pinned ? component.pos[1] : offsets[r][i] - Math.round(size.height / 2);
-      // `id` is load-bearing: automaticPortSpread groups ports by `rect.id`, so
-      // id-less boxes all hash to the same key and unrelated connections get
-      // fanned apart against each other, giving the solver routes the renderer
-      // will never draw.
-      boxes.set(component.id, {
-        id: component.id,
-        x, y, width: size.width, height: size.height, cx: x + size.width / 2, cy: y + size.height / 2, rank: r,
-      });
-    }));
-    return boxes;
-  };
-
-  // Close the rank gaps until the drawing fits its readability budget. Gaps are
-  // the only slack: node widths are already the minimum that keeps their text
-  // legible, so shrinking those would trade one readability failure for another.
   const budget = widthBudget(components);
-  let measured = place(options);
-  if (intrinsicWidth(arch, measured, options) > budget) {
-    outer:
-    for (const ignoreLabelWidth of [false, true]) {
-      for (let gap = options.rankGap; gap >= MIN_RANK_GAP; gap -= 4) {
-        const tightened = {
-          ...options, ignoreLabelWidth, rankGap: gap, rankPitch: Math.min(options.rankPitch, gap + 40),
-        };
-        measured = place(tightened);
-        if (intrinsicWidth(arch, measured, tightened) <= budget) break outer;
+
+  const solve = (returnLane, notes) => {
+    const layers = orderRanks(graph, rank, { returnLane });
+    const place = (opts) => {
+      const centres = rankCentres(layers, sizes, graph, rank, opts);
+      const offsets = rankOffsets(layers, sizes, graph, rank, opts);
+      const boxes = new Map();
+      layers.forEach((layer, r) => layer.forEach((entry, i) => {
+        if (entry.node === null) return;
+        const component = components[entry.node];
+        const size = sizes.get(component.id);
+        // An authored pos is an absolute pin; the solver places around it.
+        const pinned = Array.isArray(component.pos) && component.pos.length === 2;
+        const x = pinned ? component.pos[0] : Math.round(centres[r] - size.width / 2);
+        const y = pinned ? component.pos[1] : offsets[r][i] - Math.round(size.height / 2);
+        // `id` is load-bearing: automaticPortSpread groups ports by `rect.id`, so
+        // id-less boxes all hash to the same key and unrelated connections get
+        // fanned apart against each other, giving the solver routes the renderer
+        // will never draw.
+        boxes.set(component.id, {
+          id: component.id,
+          x, y, width: size.width, height: size.height, cx: x + size.width / 2, cy: y + size.height / 2, rank: r,
+        });
+      }));
+      return boxes;
+    };
+
+    // Close the rank gaps until the drawing fits its readability budget. Gaps
+    // are the only slack: node widths are already the minimum that keeps their
+    // text legible, so shrinking those trades one readability failure for
+    // another.
+    let boxes = place(options);
+    if (intrinsicWidth(arch, boxes, options) > budget) {
+      outer:
+      for (const ignoreLabelWidth of [false, true]) {
+        for (let gap = options.rankGap; gap >= MIN_RANK_GAP; gap -= 4) {
+          const tightened = {
+            ...options, ignoreLabelWidth, rankGap: gap, rankPitch: Math.min(options.rankPitch, gap + 40),
+          };
+          boxes = place(tightened);
+          if (intrinsicWidth(arch, boxes, tightened) <= budget) break outer;
+        }
       }
     }
+    separateBoundaries(arch, boxes, options, notes);
+    enforceSeparation(boxes, options);
+    reduceCrossings(boxes, connections, options);
+    normalizeToMargin(boxes, options);
+    return { boxes, layers };
+  };
+
+  // Which side a return path should loop along depends on which side is free,
+  // and that is a property of this graph rather than a rule. Both are cheap to
+  // try, and real crossings are an exact score, so try both and keep the better
+  // rather than guessing from a heuristic.
+  const hasReturn = graph.edges.some((edge) => rank[edge.from] > rank[edge.to]);
+  const lanes = options.returnLane ? [options.returnLane] : (hasReturn ? ['top', 'bottom'] : ['bottom']);
+  let best = null;
+  for (const lane of lanes) {
+    const notes = [];
+    const { boxes, layers } = solve(lane, notes);
+    const score = countRouteCrossings(boxes, connections);
+    if (best === null || score < best.score) best = { boxes, layers, notes, score, lane };
+    if (score === 0) break;
   }
+  const { boxes: measured, layers, notes } = best;
+  problems.push(...notes);
+
   const finalWidth = intrinsicWidth(arch, measured, options);
   if (finalWidth > budget) {
     problems.push(
@@ -622,12 +681,8 @@ export function autoLayout(arch, problems = []) {
     );
   }
 
-  separateBoundaries(arch, measured, options, problems);
-  enforceSeparation(measured, options);
-  reduceCrossings(measured, connections, options);
-  normalizeToMargin(measured, options);
   const connectionsOut = resolveLabels(arch, measured, problems);
-  return { components: measured, connections: connectionsOut, rank, layers, graph, options };
+  return { components: measured, connections: connectionsOut, rank, layers, graph, options, returnLane: best.lane };
 }
 
 export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings, normalizeToMargin };

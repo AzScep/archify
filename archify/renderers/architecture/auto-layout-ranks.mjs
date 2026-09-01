@@ -190,7 +190,7 @@ export function countCrossings(upper, lower, pairs) {
  * @returns {Array<Array<{key: string, node: number|null, edge: number|null}>>}
  *   one entry per rank, ordered.
  */
-export function orderRanks(graph, rank, { sweeps = 4 } = {}) {
+export function orderRanks(graph, rank, { sweeps = 4, returnLane = 'bottom' } = {}) {
   const { nodes, edges } = graph;
   const rankCount = Math.max(0, ...rank.map((r) => r + 1));
   const layers = Array.from({ length: rankCount }, () => []);
@@ -207,9 +207,14 @@ export function orderRanks(graph, rank, { sweeps = 4 } = {}) {
     const [lo, hi] = [rank[edge.from], rank[edge.to]].sort((a, b) => a - b);
     if (hi - lo <= 1) continue;
     const chain = [];
+    // A return path shares no lane with the forward flow. Left in the main band
+    // its corridor sits among the ranks it travels back across, where any
+    // forward edge between those ranks crosses it - and showcase rejects a
+    // crossing the author of an auto layout has no coordinate to fix.
+    const band = rank[edge.from] > rank[edge.to] ? (returnLane === 'top' ? -2 : 2) : 0;
     for (let r = lo + 1; r < hi; r += 1) {
       const key = `v${edge.index}_${r}`;
-      meta.set(key, { key, node: null, edge: edge.index, band: 0, order: nodes.length + edge.index, group: null });
+      meta.set(key, { key, node: null, edge: edge.index, band, order: nodes.length + edge.index, group: null });
       layers[r].push(key);
       chain.push(key);
     }
