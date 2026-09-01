@@ -98,3 +98,69 @@ test('side and group hints are read onto the nodes', () => {
   assert.deepEqual(graph.nodes.map((n) => n.band), [-1, 1, 0, 0]);
   assert.equal(graph.nodes[2].group, 'g');
 });
+
+// ---- ordering ---------------------------------------------------------------
+
+import { orderRanks } from '../renderers/architecture/auto-layout-ranks.mjs';
+
+const plan = (components, connections) => {
+  const graph = buildGraph(components, connections);
+  const rank = assignRanks(graph, breakCycles(graph));
+  return { graph, rank, layers: orderRanks(graph, rank) };
+};
+const idsAt = (layers, r, graph) => layers[r].map((m) => (m.node === null ? `~${m.edge}` : graph.nodes[m.node].id));
+
+test('ordering places one entry per rank and keeps every component', () => {
+  const { graph, layers } = plan(comps('a', 'b', 'c'), conns(['a', 'b'], ['b', 'c']));
+  assert.equal(layers.length, 3);
+  assert.deepEqual(layers.flat().filter((m) => m.node !== null).length, 3);
+  assert.deepEqual(idsAt(layers, 0, graph), ['a']);
+});
+
+test('a spanning edge gets a virtual node on each rank it crosses', () => {
+  // a->d spans ranks 0..3, so it needs stand-ins at ranks 1 and 2.
+  const { layers } = plan(comps('a', 'b', 'c', 'd'), conns(['a', 'b'], ['b', 'c'], ['c', 'd'], ['a', 'd']));
+  const virtual = layers.flat().filter((m) => m.node === null);
+  assert.equal(virtual.length, 2, 'one stand-in per intermediate rank');
+  assert.deepEqual(virtual.map((m) => m.edge), [3, 3]);
+});
+
+test('adjacent-rank edges need no virtual nodes', () => {
+  const { layers } = plan(comps('a', 'b'), conns(['a', 'b']));
+  assert.equal(layers.flat().filter((m) => m.node === null).length, 0);
+});
+
+test('the side hint dominates the barycenter', () => {
+  const components = [{ id: 'a' }, { id: 'top', side: 'top' }, { id: 'bottom', side: 'bottom' }, { id: 'mid' }];
+  const { graph, layers } = plan(components, conns(['a', 'top'], ['a', 'bottom'], ['a', 'mid']));
+  assert.deepEqual(idsAt(layers, 1, graph), ['top', 'mid', 'bottom'], 'bands never interleave');
+});
+
+test('group members end up contiguous', () => {
+  const components = [
+    { id: 'a' },
+    { id: 'g1', group: 'g' }, { id: 'loner' }, { id: 'g2', group: 'g' },
+  ];
+  const { graph, layers } = plan(components, conns(['a', 'g1'], ['a', 'loner'], ['a', 'g2']));
+  const ids = idsAt(layers, 1, graph);
+  assert.equal(Math.abs(ids.indexOf('g1') - ids.indexOf('g2')), 1, `expected g1/g2 adjacent, got ${ids}`);
+});
+
+test('ordering reduces crossings on a deliberately crossed graph', () => {
+  const components = comps('a1', 'a2', 'b1', 'b2');
+  const connections = conns(['a1', 'b2'], ['a2', 'b1']);
+  const { graph, rank } = plan(components, connections);
+  const layers = orderRanks(graph, rank);
+  const pairs = [{ upper: 'a1', lower: 'b2' }, { upper: 'a2', lower: 'b1' }];
+  const order = (r) => idsAt(layers, r, graph);
+  assert.equal(countCrossings(order(0), order(1), pairs), 0, `expected an uncrossed order, got ${order(0)} / ${order(1)}`);
+});
+
+test('ordering is deterministic', () => {
+  const run = () => {
+    const { graph, layers } = plan(comps('a', 'b', 'c', 'd', 'e'), conns(['a', 'b'], ['a', 'c'], ['b', 'd'], ['c', 'd'], ['a', 'e'], ['e', 'd']));
+    return layers.map((l, r) => idsAt(layers, r, graph).join(','));
+  };
+  const first = run();
+  for (let i = 0; i < 5; i += 1) assert.deepEqual(run(), first);
+});

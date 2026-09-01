@@ -1,0 +1,141 @@
+// Sizing, placement and label resolution for automatic architecture layout.
+// Run: node --test test/architecture-auto-layout.test.mjs
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  autoLayout, sizeComponent, textWidthAtPreferred, widthBudget, autoOptions, separateBoundaries,
+} from '../renderers/architecture/auto-layout.mjs';
+import { fittedNodeFontSize } from '../renderers/shared/text-fit.mjs';
+import { rectsOverlap } from '../renderers/shared/geometry.mjs';
+
+const doc = (components, connections = [], extra = {}) => ({
+  schema_version: 1,
+  diagram_type: 'architecture',
+  meta: { title: 'T', quality_profile: 'showcase' },
+  layout: { mode: 'auto' },
+  components,
+  connections,
+  ...extra,
+});
+const node = (id, rest = {}) => ({ id, type: 'backend', label: id, ...rest });
+
+test('a document without auto mode is left entirely alone', () => {
+  assert.equal(autoLayout({ layout: { mode: 'grid' }, components: [] }), null);
+  assert.equal(autoLayout({ components: [] }), null);
+});
+
+test('nodes are sized so their text keeps its preferred font', () => {
+  const options = autoOptions({});
+  const c = node('a', { sublabel: 'a fairly long sublabel here' });
+  const { width } = sizeComponent(c, options);
+  assert.equal(fittedNodeFontSize(c.sublabel, width, 9, 6), 9,
+    'sizing to the text is what keeps the sublabel off the 6px floor');
+});
+
+test('an authored size is a hard pin', () => {
+  const { width, height, pinned } = sizeComponent(node('a', { size: [321, 77] }), autoOptions({}));
+  assert.deepEqual([width, height, pinned], [321, 77, true]);
+});
+
+test('widths stay even so cx lands exactly on the rank centre', () => {
+  // defaultFromSide only prefers top/bottom over left/right at exact equality,
+  // so an off-by-a-half centre silently changes how same-rank edges route.
+  for (const label of ['a', 'abc', 'a much longer label', 'xy']) {
+    assert.equal(sizeComponent(node('n', { label }), autoOptions({})).width % 2, 0);
+  }
+});
+
+test('a short label still gets the minimum width', () => {
+  assert.equal(sizeComponent(node('a', { label: 'x' }), autoOptions({})).width, 120);
+});
+
+test('textWidthAtPreferred is zero for absent text', () => {
+  assert.equal(textWidthAtPreferred(undefined, 9), 0);
+  assert.equal(textWidthAtPreferred('', 9), 0);
+});
+
+test('the width budget follows the readability floor', () => {
+  // 930px of reader width, 6px floor: 9px sublabels buy 1395px of canvas.
+  assert.equal(widthBudget([node('a', { sublabel: 's' })]), 1395);
+  assert.equal(widthBudget([node('a')]), 1705);
+});
+
+test('placement separates every pair by the validator minimum', () => {
+  const components = ['a', 'b', 'c', 'd', 'e'].map((id) => node(id));
+  const connections = [['a', 'b'], ['b', 'c'], ['a', 'd'], ['d', 'c'], ['c', 'e']]
+    .map(([from, to]) => ({ from, to }));
+  const plan = autoLayout(doc(components, connections));
+  const boxes = [...plan.components.values()];
+  for (let i = 0; i < boxes.length; i += 1) {
+    for (let j = i + 1; j < boxes.length; j += 1) {
+      assert.ok(!rectsOverlap(boxes[i], boxes[j], 8), `components ${i}/${j} sit closer than 8px`);
+    }
+  }
+});
+
+test('every measured box carries its id', () => {
+  // automaticPortSpread groups ports by rect.id; id-less boxes all hash alike
+  // and fan unrelated connections apart, so the solver scores routes the
+  // renderer will never draw.
+  const plan = autoLayout(doc([node('a'), node('b')], [{ from: 'a', to: 'b' }]));
+  for (const [id, box] of plan.components) assert.equal(box.id, id);
+});
+
+test('ranks advance left to right', () => {
+  const plan = autoLayout(doc([node('a'), node('b'), node('c')], [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }]));
+  const x = (id) => plan.components.get(id).x;
+  assert.ok(x('a') < x('b') && x('b') < x('c'));
+});
+
+test('an authored pos pins a node and the rest place around it', () => {
+  const plan = autoLayout(doc(
+    [node('a'), node('pinned', { pos: [500, 400] }), node('c')],
+    [{ from: 'a', to: 'pinned' }, { from: 'pinned', to: 'c' }],
+  ));
+  const box = plan.components.get('pinned');
+  assert.deepEqual([box.x, box.y], [500, 400]);
+});
+
+test('placement is deterministic', () => {
+  const build = () => autoLayout(doc(
+    ['a', 'b', 'c', 'd'].map((id) => node(id)),
+    [{ from: 'a', to: 'b' }, { from: 'a', to: 'c' }, { from: 'b', to: 'd' }, { from: 'c', to: 'd' }],
+  ));
+  const snapshot = (p) => JSON.stringify([...p.components.entries()]);
+  const first = snapshot(build());
+  for (let i = 0; i < 5; i += 1) assert.equal(snapshot(build()), first);
+});
+
+test('a boundary never encloses a component it does not wrap', () => {
+  // The frame is derived from its members and grows to hold a title that is
+  // itself pushed above blockers, so an unseparated boundary can end up
+  // visibly containing components that are not in it.
+  const components = ['a', 'b', 'c', 'inside1', 'inside2'].map((id) => node(id));
+  const connections = [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'a', to: 'inside1' }, { from: 'inside1', to: 'inside2' }];
+  const arch = doc(components, connections, {
+    boundaries: [{ kind: 'security-group', label: 'A boundary with a fairly long title', wraps: ['inside1', 'inside2'] }],
+  });
+  const plan = autoLayout(arch);
+  const wraps = new Set(['inside1', 'inside2']);
+  const members = [...wraps].map((id) => plan.components.get(id));
+  const left = Math.min(...members.map((m) => m.x)) - 30;
+  const right = Math.max(...members.map((m) => m.x + m.width)) + 30;
+  const top = Math.min(...members.map((m) => m.y));
+  for (const [id, box] of plan.components) {
+    if (wraps.has(id)) continue;
+    const overlapsX = box.x + box.width > left && box.x < right;
+    assert.ok(!(overlapsX && box.y < top && box.y + box.height > top - 30),
+      `${id} sits in the title rail of a boundary it is not a member of`);
+  }
+});
+
+test('separateBoundaries is a no-op when nothing intrudes', () => {
+  const measured = new Map([
+    ['m', { id: 'm', x: 0, y: 200, width: 100, height: 60, cx: 50, cy: 230 }],
+    ['far', { id: 'far', x: 400, y: 0, width: 100, height: 60, cx: 450, cy: 30 }],
+  ]);
+  const before = JSON.stringify([...measured]);
+  separateBoundaries({ boundaries: [{ label: 'b', wraps: ['m'] }] }, measured, autoOptions({}), []);
+  assert.equal(JSON.stringify([...measured]), before);
+});

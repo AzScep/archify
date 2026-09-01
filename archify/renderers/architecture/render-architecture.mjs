@@ -11,6 +11,7 @@ import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createRouter } from './routing.mjs';
+import { autoLayout } from './auto-layout.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -51,6 +52,10 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
 });
 
 const grid = gridLayout(arch);
+// Automatic placement. Null for free and grid documents, which keep their
+// authored geometry untouched.
+const autoProblems = [];
+const auto = autoLayout(arch, autoProblems);
 
 const layout = {
   defaultW: 120,
@@ -82,15 +87,20 @@ const LEGEND_CATALOG = [
 
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
+  const planned = auto?.components.get(c.id);
+  if (planned) return { ...c, ...planned };
   const [x, y] = resolveComponentPos(c, grid);
   const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
   return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+// Auto mode may return connections carrying solver-assigned label offsets;
+// every other document uses the authored list unchanged.
+const connections = auto?.connections ?? asArray(arch.connections);
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
-for (const [index, conn] of asArray(arch.connections).entries()) {
+for (const [index, conn] of connections.entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
   if (!componentSteps.has(conn.to)) componentSteps.set(conn.to, index + 1);
 }
@@ -332,9 +342,10 @@ function validateArchitecture() {
   }
   const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
+  problems.push(...autoProblems);
   if (grid) {
     validateGridPlacement(arch, grid, problems);
-  } else {
+  } else if (!auto) {
     for (const c of asArray(arch.components)) {
       if (!Array.isArray(c.pos) || c.pos.length !== 2) {
         problems.push(`Component "${c.id}" must include pos [x, y] when layout.mode is omitted (free placement).`);
@@ -486,7 +497,7 @@ function validateArchitecture() {
     }
   }
 
-  for (const conn of asArray(arch.connections)) {
+  for (const conn of connections) {
     if (!components.has(conn.from)) problems.push(`Connection "${conn.label || conn.from}" references unknown source "${conn.from}".`);
     if (!components.has(conn.to)) problems.push(`Connection "${conn.label || conn.to}" references unknown target "${conn.to}".`);
     if (components.has(conn.from) && components.has(conn.to)) {
@@ -498,7 +509,7 @@ function validateArchitecture() {
   }
 
   problems.push(...cleanEndpointSideProblems({
-    relations: arch.connections,
+    relations: connections,
     endpointIds: new Set(components.keys()),
     pathFor,
     diagramType: 'architecture',
@@ -508,7 +519,7 @@ function validateArchitecture() {
     routeHint: 'keep automatic routing so the renderer can use a side-aware bridge, or set truthful fromSide/toSide with perpendicular via segments',
   }));
   problems.push(...cleanFlowProblems({
-    relations: arch.connections,
+    relations: connections,
     obstacles: components.values(),
     pathFor,
     diagramType: 'architecture',
@@ -517,7 +528,7 @@ function validateArchitecture() {
     routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
   }));
   problems.push(...cleanCrossingProblems({
-    relations: arch.connections,
+    relations: connections,
     endpointIds: new Set(components.keys()),
     pathFor,
     diagramType: 'architecture',
@@ -526,7 +537,7 @@ function validateArchitecture() {
     routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
-    relations: arch.connections,
+    relations: connections,
     endpointIds: new Set(components.keys()),
     pathFor,
     diagramType: 'architecture',
@@ -535,7 +546,7 @@ function validateArchitecture() {
     routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
-    relations: arch.connections,
+    relations: connections,
     endpointIds: new Set(components.keys()),
     frames: compositionFrames,
     pathFor,
@@ -545,7 +556,7 @@ function validateArchitecture() {
     routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({
-    relations: arch.connections,
+    relations: connections,
     endpointIds: new Set(components.keys()),
     pathFor,
     diagramType: 'architecture',
@@ -556,7 +567,7 @@ function validateArchitecture() {
 
   // Connection labels must not land on top of components.
   const labelRects = [];
-  for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
+  for (const [connectionIndex, conn] of connections.entries()) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
     const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
@@ -578,7 +589,7 @@ function validateArchitecture() {
     }
   }
   problems.push(...cleanLabelRouteClearanceProblems({
-    relations: arch.connections,
+    relations: connections,
     labels: labelRects,
     endpointIds: new Set(components.keys()),
     pathFor,
@@ -596,7 +607,7 @@ function validateArchitecture() {
 
 function buildLayoutReport() {
   const labels = [];
-  for (const conn of asArray(arch.connections)) {
+  for (const conn of connections) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
     const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
@@ -616,7 +627,7 @@ function buildLayoutReport() {
     viewBox,
     components: [...components.values()].map(componentBox),
     boundaries: boundaries.map(boundaryBox),
-    connections: asArray(arch.connections)
+    connections: connections
       .filter((conn) => components.has(conn.from) && components.has(conn.to))
       .map((conn) => {
         const routed = pathFor(conn);
@@ -628,7 +639,7 @@ function buildLayoutReport() {
 }
 
 // ---- Connection routing ------------------------------------------------------
-const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections);
+const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, connections);
 
 // ---- Rendering ---------------------------------------------------------------
 function renderBoundaryFrame(b, index) {
@@ -688,7 +699,7 @@ function renderComponent(c) {
 
 function renderLegend() {
   const entries = architectureLegendEntries;
-  const relationshipObstacles = relationshipLegendObstacles(arch.connections, {
+  const relationshipObstacles = relationshipLegendObstacles(connections, {
     pointsFor: (connection) => pathFor(connection).points,
     labelRectFor: (connection) => {
       if (!connection.label) return null;
@@ -730,13 +741,13 @@ ${renderDefinitions()}
 ${boundaries.map(renderBoundaryFrame).join('\n\n')}
 
         <!-- Connection paths (before components for correct z-order) -->
-${asArray(arch.connections).map(renderConnectionPath).join('\n')}
+${connections.map(renderConnectionPath).join('\n')}
 
         <!-- Components -->
 ${[...components.values()].map(renderComponent).join('\n\n')}
 
         <!-- Connection labels -->
-${asArray(arch.connections).map(renderConnectionLabel).join('\n')}
+${connections.map(renderConnectionLabel).join('\n')}
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
 ${boundaries.map(renderBoundaryLabel).join('\n\n')}
