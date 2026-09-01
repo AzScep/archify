@@ -139,3 +139,35 @@ test('separateBoundaries is a no-op when nothing intrudes', () => {
   separateBoundaries({ boundaries: [{ label: 'b', wraps: ['m'] }] }, measured, autoOptions({}), []);
   assert.equal(JSON.stringify([...measured]), before);
 });
+
+// ---- repair passes ----------------------------------------------------------
+
+import { countRouteCrossings, enforceSeparation } from '../renderers/architecture/auto-layout.mjs';
+
+test('enforceSeparation restores the 8px minimum after boxes are moved', () => {
+  // separateBoundaries shifts whole member sets after vertical assignment, so
+  // a member can be pushed back into a neighbour it was already clear of.
+  const options = autoOptions({});
+  const measured = new Map([
+    ['a', { id: 'a', rank: 0, x: 0, y: 0, width: 120, height: 60, cx: 60, cy: 30 }],
+    ['b', { id: 'b', rank: 0, x: 0, y: 59, width: 120, height: 60, cx: 60, cy: 89 }],
+  ]);
+  enforceSeparation(measured, options);
+  assert.ok(!rectsOverlap(measured.get('a'), measured.get('b'), 8));
+});
+
+test('the solver leaves no proper crossing on a graph that invites one', () => {
+  // Two independent flows whose endpoints are ordered to cross.
+  const components = ['a1', 'a2', 'b1', 'b2'].map((id) => node(id));
+  const connections = [{ from: 'a1', to: 'b2' }, { from: 'a2', to: 'b1' }];
+  const plan = autoLayout(doc(components, connections));
+  assert.equal(countRouteCrossings(plan.components, plan.connections), 0);
+});
+
+test('countRouteCrossings exempts relationships sharing an endpoint', () => {
+  const plan = autoLayout(doc(
+    ['hub', 'x', 'y'].map((id) => node(id)),
+    [{ from: 'hub', to: 'x' }, { from: 'hub', to: 'y' }],
+  ));
+  assert.equal(countRouteCrossings(plan.components, plan.connections), 0);
+});

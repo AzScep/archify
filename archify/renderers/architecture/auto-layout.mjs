@@ -217,6 +217,106 @@ function intrinsicWidth(arch, measured, options) {
 }
 
 
+
+
+/** Do two segments cross at a point interior to both? */
+function properlyCross(a1, a2, b1, b2) {
+  const side = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  const d1 = side(a1, a2, b1); const d2 = side(a1, a2, b2);
+  const d3 = side(b1, b2, a1); const d4 = side(b1, b2, a2);
+  return d1 !== 0 && d2 !== 0 && d3 !== 0 && d4 !== 0 && d1 !== d2 && d3 !== d4;
+}
+
+/** Crossings between relationships that share no endpoint, over real routes. */
+export function countRouteCrossings(measured, connections) {
+  const { pathFor } = createRouter(measured, connections);
+  const live = connections.filter((c) => measured.has(c.from) && measured.has(c.to));
+  const paths = live.map((c) => pathFor(c).points);
+  let crossings = 0;
+  for (let i = 0; i < live.length; i += 1) {
+    for (let j = i + 1; j < live.length; j += 1) {
+      const a = live[i]; const b = live[j];
+      if (a.from === b.from || a.from === b.to || a.to === b.from || a.to === b.to) continue;
+      for (let m = 0; m + 1 < paths[i].length; m += 1) {
+        for (let n = 0; n + 1 < paths[j].length; n += 1) {
+          if (properlyCross(paths[i][m], paths[i][m + 1], paths[j][n], paths[j][n + 1])) crossings += 1;
+        }
+      }
+    }
+  }
+  return crossings;
+}
+
+/**
+ * Swap same-rank neighbours while that reduces real crossings.
+ *
+ * Ordering already minimises crossings over the layered graph, but the router
+ * decides the actual polylines - it fans ports apart and takes edges around
+ * obstacles - so a graph-optimal order can still draw a crossing. Showcase
+ * rejects any crossing between relationships that share no endpoint, and the
+ * author of an auto layout has no coordinate to fix it with, so the solver has
+ * to close that gap against the geometry that will really be drawn.
+ */
+export function reduceCrossings(measured, connections, options, rounds = 6) {
+  let best = countRouteCrossings(measured, connections);
+  for (let round = 0; round < rounds && best > 0; round += 1) {
+    const byRank = new Map();
+    for (const [id, box] of measured) {
+      const key = box.rank ?? 0;
+      if (!byRank.has(key)) byRank.set(key, []);
+      byRank.get(key).push(id);
+    }
+    let improved = false;
+    for (const ids of byRank.values()) {
+      ids.sort((a, b) => measured.get(a).y - measured.get(b).y);
+      for (let i = 0; i + 1 < ids.length && !improved; i += 1) {
+        const a = measured.get(ids[i]); const b = measured.get(ids[i + 1]);
+        const trial = new Map(measured);
+        // Swap the slots, not the boxes: each keeps its own height.
+        const aY = b.y + b.height - a.height;
+        trial.set(ids[i], { ...a, y: aY, cy: aY + a.height / 2 });
+        trial.set(ids[i + 1], { ...b, y: a.y, cy: a.y + b.height / 2 });
+        const score = countRouteCrossings(trial, connections);
+        if (score >= best) continue;
+        best = score;
+        for (const [id, box] of trial) measured.set(id, box);
+        enforceSeparation(measured, options);
+        improved = true;
+      }
+      if (improved) break;
+    }
+    if (!improved) break;
+  }
+  return best;
+}
+
+/**
+ * Restore the 8px minimum between components after something has moved them.
+ *
+ * Separation is enforced during vertical assignment, but boundary separation
+ * runs afterwards and shifts whole member sets, which can push a member back
+ * into a neighbour it was already clear of.
+ */
+export function enforceSeparation(measured, options) {
+  const byRank = new Map();
+  for (const [id, box] of measured) {
+    const key = box.rank ?? 0;
+    if (!byRank.has(key)) byRank.set(key, []);
+    byRank.get(key).push(id);
+  }
+  for (const ids of byRank.values()) {
+    ids.sort((a, b) => measured.get(a).y - measured.get(b).y || (a < b ? -1 : 1));
+    for (let i = 1; i < ids.length; i += 1) {
+      const prev = measured.get(ids[i - 1]);
+      const box = measured.get(ids[i]);
+      const floor = prev.y + prev.height + options.nodeGapY;
+      if (box.y >= floor) continue;
+      const delta = Math.ceil(floor - box.y);
+      measured.set(ids[i], { ...box, y: box.y + delta, cy: box.cy + delta });
+    }
+  }
+}
+
 /**
  * Push each boundary's members clear of anything that is not one of them.
  *
@@ -483,8 +583,10 @@ export function autoLayout(arch, problems = []) {
   }
 
   separateBoundaries(arch, measured, options, problems);
+  enforceSeparation(measured, options);
+  reduceCrossings(measured, connections, options);
   const connectionsOut = resolveLabels(arch, measured, problems);
   return { components: measured, connections: connectionsOut, rank, layers, graph, options };
 }
 
-export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries };
+export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings };
