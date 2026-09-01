@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Order Service — Automatic Layout",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "order-path", "label": "Order path", "focus": ["client", "gateway", "orders", "orders_db"], "note": "The synchronous path a customer request takes to durable state." },
+      { "id": "async-work", "label": "Async work", "focus": ["orders", "queue", "fulfilment", "orders_db"], "note": "Fulfilment drains the queue and reports back to the order service." }
+    ]
+  },
+  "layout": { "mode": "auto" },
+  "components": [
+    { "id": "client", "type": "external", "label": "Storefront", "sublabel": "Web and mobile" },
+    { "id": "identity", "type": "security", "label": "Identity", "sublabel": "OIDC provider", "side": "top" },
+    { "id": "gateway", "type": "backend", "label": "API Gateway", "sublabel": "Routing and rate limits" },
+    { "id": "orders", "type": "backend", "label": "Order Service", "sublabel": "Domain logic", "group": "core" },
+    { "id": "queue", "type": "messagebus", "label": "Order Events", "sublabel": "Durable topic", "group": "core" },
+    { "id": "fulfilment", "type": "backend", "label": "Fulfilment", "sublabel": "Queue consumer", "group": "core" },
+    { "id": "orders_db", "type": "database", "label": "PostgreSQL", "sublabel": "Order state" },
+    { "id": "warehouse", "type": "cloud", "label": "Warehouse API", "sublabel": "Third party", "side": "bottom" }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "Private network", "wraps": ["orders", "queue", "fulfilment", "orders_db"] }
+  ],
+  "connections": [
+    { "id": "browse", "from": "client", "to": "gateway", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "verify", "from": "identity", "to": "gateway", "label": "verify token", "variant": "security" },
+    { "id": "place-order", "from": "gateway", "to": "orders", "label": "POST /orders", "variant": "emphasis" },
+    { "id": "persist", "from": "orders", "to": "orders_db", "label": "write order", "variant": "emphasis" },
+    { "id": "publish", "from": "orders", "to": "queue", "label": "OrderPlaced", "variant": "dashed" },
+    { "id": "consume", "from": "queue", "to": "fulfilment", "label": "consume" },
+    { "id": "dispatch", "from": "fulfilment", "to": "warehouse", "label": "dispatch", "variant": "dashed" },
+    { "id": "settle", "from": "fulfilment", "to": "orders", "label": "fulfilment result", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Automatic layout", "items": ["Every position is derived: this document declares no pos, size or viewBox", "Ranks come from edge direction, order from crossing reduction", "Node widths are sized to their text so sublabels keep their preferred size"] },
+    { "dot": "emerald", "title": "Hints", "items": ["side: top lifts Identity off the main rail", "side: bottom drops the third party below it", "group: core keeps the private-network services together"] },
+    { "dot": "rose", "title": "Return path", "items": ["Fulfilment reports back to the Order Service, three ranks upstream", "A return path is given its own lane rather than a corridor among the ranks it crosses"] }
+  ]
+}
