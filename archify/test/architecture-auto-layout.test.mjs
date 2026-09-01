@@ -171,3 +171,36 @@ test('countRouteCrossings exempts relationships sharing an endpoint', () => {
   ));
   assert.equal(countRouteCrossings(plan.components, plan.connections), 0);
 });
+
+test('the drawing is pulled up against its top margin', () => {
+  // Repair passes only ever push boxes down, so without normalisation the whole
+  // drawing drifts off the top edge into a dead band no gate measures.
+  const plan = autoLayout(doc(
+    ['a', 'b', 'c'].map((id) => node(id)),
+    [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }],
+  ));
+  const top = Math.min(...[...plan.components.values()].map((b) => b.y));
+  assert.equal(top, autoOptions({}).margin);
+});
+
+test('a component outside every boundary stays outside its frame', () => {
+  // Upstream's ROADMAP names "Auth Provider floating outside the AWS region" as
+  // the kind of decision auto layout destroys. It survives here because
+  // boundary membership, not proximity, decides the frame.
+  const components = ['auth', 'edge', 'api', 'db'].map((id) => node(id));
+  const arch = doc(components, [{ from: 'auth', to: 'api' }, { from: 'edge', to: 'api' }, { from: 'api', to: 'db' }], {
+    boundaries: [{ kind: 'region', label: 'Region', wraps: ['edge', 'api', 'db'] }],
+  });
+  const plan = autoLayout(arch);
+  const members = ['edge', 'api', 'db'].map((id) => plan.components.get(id));
+  const frame = {
+    x: Math.min(...members.map((m) => m.x)) - 30,
+    y: Math.min(...members.map((m) => m.y)) - 30,
+    right: Math.max(...members.map((m) => m.x + m.width)) + 30,
+    bottom: Math.max(...members.map((m) => m.y + m.height)) + 50,
+  };
+  const auth = plan.components.get('auth');
+  const enclosed = auth.x >= frame.x && auth.x + auth.width <= frame.right
+    && auth.y >= frame.y && auth.y + auth.height <= frame.bottom;
+  assert.ok(!enclosed, 'a non-member must not end up inside the frame');
+});

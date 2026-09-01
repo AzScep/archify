@@ -188,8 +188,7 @@ export function rankOffsets(layers, sizes, graph, options, passes = 3) {
     }
   }
 
-  const lift = Math.min(options.margin, ...cys.flat().map((v, i) => v)) - options.margin;
-  return cys.map((layer) => layer.map((v) => Math.round(v - Math.min(0, lift))));
+  return cys.map((layer) => layer.map((v) => Math.round(v)));
 }
 
 
@@ -218,6 +217,23 @@ function intrinsicWidth(arch, measured, options) {
 
 
 
+
+
+/**
+ * Pull the drawing up against its top margin.
+ *
+ * Vertical assignment aligns ranks against each other, not against the canvas,
+ * and the repair passes only ever push boxes down - so without this the whole
+ * drawing drifts away from the top edge and leaves a dead band no gate
+ * complains about, since none of them measures whitespace.
+ */
+export function normalizeToMargin(measured, options) {
+  if (!measured.size) return;
+  const top = Math.min(...[...measured.values()].map((box) => box.y));
+  const delta = Math.round(options.margin - top);
+  if (delta === 0) return;
+  for (const [id, box] of measured) measured.set(id, { ...box, y: box.y + delta, cy: box.cy + delta });
+}
 
 /** Do two segments cross at a point interior to both? */
 function properlyCross(a1, a2, b1, b2) {
@@ -352,14 +368,38 @@ export function separateBoundaries(arch, measured, options, problems = []) {
         blockedTo = Math.max(blockedTo, box.y + box.height);
       }
       const required = blockedTo + RAIL_BAND + options.nodeGapY;
-      if (blockedTo === -Infinity || required <= memberTop) continue;
-      const delta = Math.ceil(required - memberTop);
-      for (const id of wraps) {
-        const box = measured.get(id);
-        if (!box) continue;
-        measured.set(id, { ...box, y: box.y + delta, cy: box.cy + delta });
+      if (blockedTo !== -Infinity && required > memberTop) {
+        const delta = Math.ceil(required - memberTop);
+        for (const id of wraps) {
+          const box = measured.get(id);
+          if (!box) continue;
+          measured.set(id, { ...box, y: box.y + delta, cy: box.cy + delta });
+        }
+        moved = true;
+        continue;
       }
-      moved = true;
+
+      // Clearing the rail is not enough: a non-member sharing the frame's
+      // columns anywhere inside its vertical span is still drawn inside the
+      // box, which states a membership that is not in `wraps`. Push it out the
+      // nearer side rather than moving the members again.
+      const top = memberTop - Math.max(pad, RAIL_BAND);
+      const bottom = Math.max(...members.map((m) => m.y + m.height)) + pad + 20;
+      for (const [id, box] of measured) {
+        if (wraps.has(id)) continue;
+        // Only full enclosure reads as membership. Merely brushing the frame is
+        // ordinary crowding, and evicting for that destabilises layouts that
+        // were otherwise clean.
+        const enclosed = box.x >= left && box.x + box.width <= right
+          && box.y >= top && box.y + box.height <= bottom;
+        if (!enclosed) continue;
+        const up = box.cy < (top + bottom) / 2;
+        const y = up
+          ? Math.floor(top - options.nodeGapY - box.height)
+          : Math.ceil(bottom + options.nodeGapY);
+        measured.set(id, { ...box, y, cy: y + box.height / 2 });
+        moved = true;
+      }
     }
     if (!moved) return;
   }
@@ -585,8 +625,9 @@ export function autoLayout(arch, problems = []) {
   separateBoundaries(arch, measured, options, problems);
   enforceSeparation(measured, options);
   reduceCrossings(measured, connections, options);
+  normalizeToMargin(measured, options);
   const connectionsOut = resolveLabels(arch, measured, problems);
   return { components: measured, connections: connectionsOut, rank, layers, graph, options };
 }
 
-export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings };
+export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings, normalizeToMargin };
