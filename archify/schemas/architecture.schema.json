@@ -71,13 +71,18 @@
       "additionalProperties": false,
       "required": ["mode"],
       "properties": {
-        "mode": { "enum": ["grid"] },
+        "mode": { "enum": ["grid", "auto"] },
         "origin": { "$ref": "common.schema.json#/$defs/point" },
         "cols": { "type": "integer", "minimum": 1, "maximum": 12 },
         "gapX": { "type": "number", "minimum": 0 },
         "gapY": { "type": "number", "minimum": 0 },
         "cellW": { "type": "number", "minimum": 40 },
-        "cellH": { "type": "number", "minimum": 24 }
+        "cellH": { "type": "number", "minimum": 24 },
+        "flow": { "enum": ["lr"] },
+        "rankPitch": { "type": "number", "minimum": 80 },
+        "nodeGapY": { "type": "number", "minimum": 8 },
+        "maxNodeW": { "type": "number", "minimum": 120 },
+        "maxViewBoxWidth": { "type": "number", "minimum": 320 }
       }
     },
     "components": {
@@ -112,6 +117,9 @@
           },
           "row": { "type": "integer", "minimum": 0 },
           "col": { "type": "integer", "minimum": 0 },
+          "rank": { "type": "integer", "minimum": 0 },
+          "group": { "$ref": "common.schema.json#/$defs/id" },
+          "side": { "enum": ["top", "bottom"] },
           "pos": { "$ref": "common.schema.json#/$defs/point" },
           "size": {
             "type": "array",
