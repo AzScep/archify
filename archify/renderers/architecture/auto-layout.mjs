@@ -38,8 +38,6 @@ export const AUTO_DEFAULTS = {
   labelGap: 8,
   /** Vertical lane a spanning edge reserves on the ranks it crosses. */
   corridor: 16,
-  /** Horizontal channel each additional edge crossing a rank gap needs. */
-  channel: 14,
 };
 
 export function autoOptions(arch) {
@@ -103,21 +101,10 @@ export function rankCentres(layers, sizes, graph, rank, options) {
 
   const constraints = [];
   for (let r = 1; r < count; r += 1) {
-    // Every edge crossing this gap that has to change row needs its own
-    // vertical channel in it. Routing is greedy and sequential, so once the
-    // channels run out the router exhausts its candidates and falls back to a
-    // route it already knows is bad - a diagonal the orthogonal-arrows check
-    // then rejects. Widening the gap is what buys the channels.
-    const crossing = graph.edges.filter((edge) => {
-      const lo = Math.min(rank[edge.from], rank[edge.to]);
-      const hi = Math.max(rank[edge.from], rank[edge.to]);
-      return lo <= r - 1 && hi >= r;
-    }).length;
-    const channels = Math.max(0, crossing - 1) * options.channel;
     constraints.push({
       from: r - 1,
       to: r,
-      minimum: Math.max(options.rankPitch, widest[r - 1] + options.rankGap + channels + widest[r]),
+      minimum: Math.max(options.rankPitch, widest[r - 1] + options.rankGap + widest[r]),
     });
   }
   for (const edge of graph.edges) {
@@ -504,6 +491,36 @@ export function boundaryObstacles(arch, measured, viewBoxWidth) {
   return placed;
 }
 
+
+/**
+ * Drop a route hint the solver has just invalidated.
+ *
+ * `route: "straight"` draws a direct line between the two anchors, and
+ * routeVia honours it before generating any candidate at all - one `return []`
+ * with no clearance check and no fallback. That is correct for a hand-placed
+ * diagram, where the author aligned the two boxes and asked for the plain line
+ * between them. Under auto layout the alignment it was written against no
+ * longer exists: the solver invented the coordinates, and a "straight" line
+ * between two boxes it did not align is a diagonal that the orthogonal-arrows
+ * check rejects and the author has no coordinate to fix.
+ *
+ * Only `straight` is demoted. `orthogonal-h` and `orthogonal-v` stay authored
+ * because they produce axis-aligned segments from any placement, so they can be
+ * unlovely but never illegal.
+ */
+export function demoteStaleRoutes(connections, measured) {
+  return connections.map((conn) => {
+    if (conn.route !== 'straight') return conn;
+    const from = measured.get(conn.from);
+    const to = measured.get(conn.to);
+    if (!from || !to) return conn;
+    const aligned = Math.abs(from.cx - to.cx) < 4 || Math.abs(from.cy - to.cy) < 4;
+    if (aligned) return conn;
+    const { route, ...rest } = conn;
+    return rest;
+  });
+}
+
 /**
  * Offset connection labels until each one sits clear of components, boundary
  * title rails and labels already placed.
@@ -518,8 +535,8 @@ const BOX_MARGIN = -2;
 // Showcase requires 4px between a label and every route it does not own.
 const LABEL_ROUTE_CLEARANCE = 4;
 
-export function resolveLabels(arch, measured, problems = []) {
-  const connections = Array.isArray(arch.connections) ? arch.connections : [];
+export function resolveLabels(arch, measured, problems = [], override = null) {
+  const connections = override ?? (Array.isArray(arch.connections) ? arch.connections : []);
   const { pathFor } = createRouter(measured, connections);
   const routed = connections
     .filter((relation) => measured.has(relation.from) && measured.has(relation.to))
@@ -681,8 +698,9 @@ export function autoLayout(arch, problems = []) {
     );
   }
 
-  const connectionsOut = resolveLabels(arch, measured, problems);
+  const routable = demoteStaleRoutes(connections, measured);
+  const connectionsOut = resolveLabels(arch, measured, problems, routable);
   return { components: measured, connections: connectionsOut, rank, layers, graph, options, returnLane: best.lane };
 }
 
-export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings, normalizeToMargin };
+export default { autoLayout, autoOptions, sizeComponent, textWidthAtPreferred, rankCentres, rankOffsets, resolveLabels, widthBudget, separateBoundaries, enforceSeparation, reduceCrossings, countRouteCrossings, normalizeToMargin, demoteStaleRoutes };

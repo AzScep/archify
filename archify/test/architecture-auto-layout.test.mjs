@@ -142,7 +142,7 @@ test('separateBoundaries is a no-op when nothing intrudes', () => {
 
 // ---- repair passes ----------------------------------------------------------
 
-import { countRouteCrossings, enforceSeparation } from '../renderers/architecture/auto-layout.mjs';
+import { countRouteCrossings, enforceSeparation, demoteStaleRoutes } from '../renderers/architecture/auto-layout.mjs';
 import { createRouter } from '../renderers/architecture/routing.mjs';
 
 test('enforceSeparation restores the 8px minimum after boxes are moved', () => {
@@ -253,14 +253,24 @@ test('the return lane is chosen by measurement, and can be pinned', () => {
   assert.equal(autoLayout(arch).returnLane, 'top');
 });
 
-test('a busier rank gap is given more room than a quiet one', () => {
-  // Each edge that changes row across a gap needs its own vertical channel.
-  const gapFor = (extra) => {
-    const components = ['a', 'b', ...extra].map((id) => node(id));
-    const connections = [{ from: 'a', to: 'b' }, ...extra.map((id) => ({ from: id, to: 'b' }))];
-    const plan = autoLayout(doc(components, connections));
-    const a = plan.components.get('a'); const b = plan.components.get('b');
-    return b.x - (a.x + a.width);
-  };
-  assert.ok(gapFor(['x', 'y', 'z']) > gapFor([]), 'a gap crossed by four edges must exceed one crossed by a single edge');
+
+test('a route hint the solver has invalidated is demoted', () => {
+  // route: "straight" makes routeVia return [] before generating any candidate
+  // at all - no clearance check, no fallback. Correct for a hand-placed diagram
+  // where the author aligned the two boxes; under auto layout that alignment
+  // never existed, so the "straight" line is a diagonal nothing can repair.
+  const measured = new Map([
+    ['a', { id: 'a', cx: 100, cy: 100 }],
+    ['b', { id: 'b', cx: 300, cy: 300 }],
+    ['c', { id: 'c', cx: 300, cy: 100 }],
+  ]);
+  const [diagonal, aligned, other] = demoteStaleRoutes([
+    { from: 'a', to: 'b', route: 'straight' },
+    { from: 'a', to: 'c', route: 'straight' },
+    { from: 'a', to: 'b', route: 'orthogonal-h' },
+  ], measured);
+  assert.equal(diagonal.route, undefined, 'a straight hint between unaligned boxes is dropped');
+  assert.equal(aligned.route, 'straight', 'a straight hint between aligned boxes is honoured');
+  assert.equal(other.route, 'orthogonal-h',
+    'orthogonal hints stay: they are axis-aligned from any placement, so unlovely at worst');
 });
