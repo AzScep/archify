@@ -95,6 +95,8 @@ node bin/archify.mjs compare architecture base.json head.json \
   architecture-delta.html --quality showcase --json
 ```
 
+仓库 revision、provider、链接模式或地址表达方式的变化会与组件、关系和边界变化分开报告。仅来源发生变化时，Delta 页面不会把任何图实体标为已变化，来源摘要也不会暴露仓库 URL。
+
 ## 6. 检查最终文件
 
 确定性校验不会在真实浏览器中运行 Viewer。如果环境有 Chrome 或 Chromium，请对刚刚交付的 HTML 收集自动化浏览器证据：
