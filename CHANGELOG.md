@@ -7,6 +7,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed
+- **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
+- **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
+- **固定提交的来源校验 (#420)。** 校验忽略本地 Git replacement refs，始终读取指定提交的原始对象，避免替换后的文件或行范围造成误接受或误拒绝；保留原有来源链接、诊断与用户 Git 配置。
+- **导出的独立 SVG 声明 UTF-8 编码。** 架构图「下载 SVG」和架构对比（compare）导出的 SVG 文档现在以 `<?xml version="1.0" encoding="UTF-8"?>` 声明开头；缺少声明时，部分消费方不按 XML 规范默认 UTF-8 而猜测编码，导致中文等非 ASCII 文本乱码。
+- **Compare 输入快照一致性 (#400)。** 原始输入校验使用首次读取的字节快照，使其与回执哈希和差异计算保持一致；读取后原文件发生变化不会影响本次比较，非法原始字段仍会被拒绝。
 - **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
 - **Machine-readable CLI argument failures (#330).** `validate --json` and `deliver --json` now keep invalid or missing option values, unknown options and diagram types, unsupported option combinations, and usage errors inside one versioned failure receipt on stdout. These failures use the `arguments` stage, stable diagnostic codes, and exit status 2, while human-mode stderr behavior remains unchanged.
 - **Complete artifact-check receipts (#311).** The checker now lets stdout drain before exiting, so large JSON receipts remain complete through pipes. Validation, delivery, and architecture comparison retain their original success/failure status without truncated-JSON errors.
