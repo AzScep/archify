@@ -6,7 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -62,9 +63,11 @@ test('lifecycle rail stays ordinary in READ and hides for hover, relationship pr
     artifact,
   ]);
 
-  const browser = new ChromeVisualBrowser(chromePath);
+  const browser = desktopBrowser(chromePath);
   try {
+    const checkPointer = await desktopPointerCheck(browser, await browser.sessionPromise);
     const sessionId = await loadArtifact(browser, artifact);
+    await checkPointer();
     const states = await evaluate(browser, sessionId, `(async function () {
       function settle(delay) {
         return new Promise(function (resolve) {
