@@ -11139,8 +11139,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: &#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;\n&#39; +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -19786,6 +19789,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <pattern id="delta-head-grid" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
           </pattern>
+
+          <marker id="delta-base-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="delta-base-arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="delta-base-arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="delta-base-arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="delta-base-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
         </defs>
 
         <!-- Background Grid -->
@@ -19801,18 +19820,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="Checkout trust zone" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
 
         <!-- Baseline relationship phantoms -->
-<path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)" data-delta-state="removed" data-delta-classifications="geometry,topology"/>
+<path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#delta-base-arrowhead-security)" data-delta-state="removed" data-delta-classifications="geometry,topology"/>
 <g data-detail="context" data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-delta-state="removed" data-delta-classifications="geometry,topology">
           <rect x="783.4" y="260" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
           <text x="810" y="270" class="t-security" font-size="8" text-anchor="middle">authorize</text>
         </g>
 
-<path data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-composition-points="495,310;495,400" d="M 495 310 L 495 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)" data-delta-state="moved-from" data-delta-classifications="geometry"/>
+<path data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-composition-points="495,310;495,400" d="M 495 310 L 495 400" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-base-arrowhead-dashed)" data-delta-state="moved-from" data-delta-classifications="geometry"/>
 <g data-detail="context" data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-delta-state="moved-from" data-delta-classifications="geometry">
           <rect x="470.8" y="356" width="48.4" height="14" rx="3" class="c-mask"/>
           <text x="495" y="366" class="t-messagebus" font-size="8" text-anchor="middle">accepted</text>
         </g>
-<path data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-composition-points="495,250;495,160" d="M 495 250 L 495 160" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" data-delta-state="removed" data-delta-classifications="topology"/>
+<path data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-composition-points="495,250;495,160" d="M 495 250 L 495 160" class="a-default" stroke-width="1.5" marker-end="url(#delta-base-arrowhead)" data-delta-state="removed" data-delta-classifications="topology"/>
 <g data-detail="context" data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-delta-state="removed" data-delta-classifications="topology">
           <rect x="473.2" y="164" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="495" y="174" class="t-muted" font-size="8" text-anchor="middle">session</text>
@@ -26366,8 +26385,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: &#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;\n&#39; +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -35448,7 +35470,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       'text[data-delta-boundary-state="added"]{fill:#34d399!important}text[data-delta-boundary-state="removed"]{fill:#fb7185!important}text[data-delta-boundary-state="changed"]{fill:#fbbf24!important}text[data-delta-boundary-state="moved-from"]{fill:#7dd3fc!important;opacity:.55}' +
       '.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}';
     clone.insertBefore(style, clone.firstChild);
-    return new XMLSerializer().serializeToString(clone);
+    // The XML declaration pins UTF-8: without it, consumers that guess an
+    // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
   }
 
   function artifactName(suffix) {
