@@ -11,6 +11,7 @@ test('privileged automation reads the default branch and does not interpolate PR
   assert.doesNotMatch(workflow, /pull_request\.head|refs\/pull|pull_request\.merge_commit_sha/);
   assert.doesNotMatch(workflow, /\$\{\{[^}]*\.(title|body|login)[^}]*\}\}/);
   assert.match(workflow, /persist-credentials: false/);
+  for (const [, ref] of workflow.matchAll(/uses:\s+[^@\s]+@([^\s]+)/g)) assert.match(ref, /^[a-f0-9]{40}$/);
   assert.match(workflow, /group: contributor-card-\$\{\{ github\.event\.pull_request\.number \|\| inputs\.pr \}\}/);
   assert.match(workflow, /cancel-in-progress: false/);
 });

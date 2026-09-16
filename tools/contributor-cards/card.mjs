@@ -15,6 +15,11 @@ export function prNumber(value) {
   if (!/^[1-9]\d{0,9}$/.test(String(value))) throw new Error('Expected a positive PR number.');
   return Number(value);
 }
+function displayTitle(title) {
+  const normalized = title.replace(/[\u0000-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069·•]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!normalized) throw new Error('PR title has no displayable text.');
+  return normalized;
+}
 export function recordFromPull(pull, repository) {
   validRepository(repository);
   const number = prNumber(pull.number);
@@ -23,6 +28,7 @@ export function recordFromPull(pull, repository) {
   if (!/^[a-f0-9]{40}$/.test(pull.merge_commit_sha || '')) throw new Error('Missing merge commit.');
   if (pull.user?.type !== 'User' || !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(pull.user.login || '')) throw new Error('A human GitHub author is required.');
   if (typeof pull.title !== 'string' || !pull.title.trim() || pull.title.length > 512) throw new Error('Invalid PR title.');
+  displayTitle(pull.title);
   return {
     templateVersion, repository, number, author: pull.user.login,
     title: pull.title, mergedAt: pull.merged_at, mergeCommit: pull.merge_commit_sha,
@@ -35,7 +41,7 @@ export function escapeHtml(value) {
 export async function cardHtml(record) {
   const data = {
     AUTHOR: record.author, NUMBER: record.number, REPOSITORY: record.repository,
-    TITLE: record.title.replace(/[\u0000-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069·•]/g, ' ').replace(/\s+/g, ' ').trim(),
+    TITLE: displayTitle(record.title),
     DATE: record.mergedAt.slice(0, 10), SHORT_SHA: record.mergeCommit.slice(0, 7),
   };
   let html = (await fs.readFile(path.join(root, 'template.html'), 'utf8'))

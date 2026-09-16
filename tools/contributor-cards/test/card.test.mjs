@@ -53,3 +53,11 @@ test('real browser fits long GitHub usernames, long unbroken titles and Chinese 
     }
   } finally { await fs.rm(output,{recursive:true,force:true}); }
 });
+
+test('titles that become empty cannot create a blank contribution field', async () => {
+  for (const title of ['·', ' • ', '\u202e\u2066', '\u0001 · • \u200f']) {
+    assert.throws(() => recordFromPull({...pull, title}, 'tt-a1i/archify'), /no displayable text/);
+    const record = recordFromPull(pull, 'tt-a1i/archify');
+    await assert.rejects(cardHtml({...record, title}), /no displayable text/);
+  }
+});

@@ -12,7 +12,7 @@ node tools/contributor-cards/cli.mjs --pr 394 --out /tmp/archify-card
 
 An optional `--repo owner/repository` selects another repository. On Linux, install `fonts-noto-cjk` for Chinese titles; on macOS the template uses PingFang SC. `ARCHIFY_CHROME` can select a Chrome executable. Preview mode never writes to GitHub.
 
-The output includes the 1000 × 1500 PNG, a portable HTML document with embedded map/fonts, original metadata with a PNG digest, a browser layout receipt, and the proposed reply. Full PR titles remain in metadata and the HTML title attribute. Font size is reduced within a readable range; exceptionally long titles end with an explicit ellipsis. Usernames are fitted without truncation; exceptionally wide 39-character handles wrap to two lines at the minimum 30px size. Middle-dot text separators are not used.
+The output includes the 1000 × 1500 PNG, a portable HTML document with embedded map/fonts, original metadata with a PNG digest, a browser layout receipt, and the proposed reply. Original PR titles remain in metadata. The HTML title attribute retains the normalized display text before visual truncation. Titles that normalize to empty text are rejected. Font size is reduced within a readable range; exceptionally long titles end with an explicit ellipsis. Usernames are fitted without truncation; exceptionally wide 39-character handles wrap to two lines at the minimum 30px size. Middle-dot text separators are not used.
 
 ## Publish and reply
 
