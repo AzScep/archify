@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5337,7 +5346,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         <g data-detail="context" data-edge-from="pull_request" data-edge-to="build" data-edge-label="merge" data-edge-key="1">
           <rect x="243" y="146" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="260" y="156" class="t-backend" font-size="8" text-anchor="middle">merge</text>
+          <text x="260" y="156" class="t-edge-emphasis" font-size="8" text-anchor="middle">merge</text>
         </g>
 
 
@@ -5345,16 +5354,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         <g data-detail="context" data-edge-from="verify_prod" data-edge-to="announce" data-edge-label="healthy" data-edge-key="6">
           <rect x="603.2" y="518" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="625" y="528" class="t-backend" font-size="8" text-anchor="middle">healthy</text>
+          <text x="625" y="528" class="t-edge-emphasis" font-size="8" text-anchor="middle">healthy</text>
         </g>
         <g data-detail="context" data-edge-from="checks" data-edge-to="failed" data-edge-label="red" data-edge-key="7">
           <rect x="350" y="456" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="365" y="466" class="t-security" font-size="8" text-anchor="middle">red</text>
+          <text x="365" y="466" class="t-edge-security" font-size="8" text-anchor="middle">red</text>
         </g>
 
         <g data-detail="context" data-edge-from="rollback" data-edge-to="deploy" data-edge-label="restore" data-edge-key="9">
           <rect x="404.2" y="595" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="426" y="605" class="t-database" font-size="8" text-anchor="middle">restore</text>
+          <text x="426" y="605" class="t-edge-dashed" font-size="8" text-anchor="middle">restore</text>
         </g>
 
         <!-- Legend -->

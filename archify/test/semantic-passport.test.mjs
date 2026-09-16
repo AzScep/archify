@@ -186,6 +186,20 @@ test('semantic passport computes and applies target top synchronously on open an
   }
 });
 
+test('committed lifecycle focus hides the non-semantic primary rail', () => {
+  const html = render('lifecycle', CASES.lifecycle);
+  const diagram = svg(html);
+  const rail = diagram.match(/<path\b[^>]*data-lifecycle-rail[^>]*>/)?.[0] || '';
+
+  assert.ok(rail, 'lifecycle: expected the primary decorative rail to be identifiable');
+  assert.doesNotMatch(rail, /data-edge-from|data-edge-to/, 'the rail must remain non-semantic');
+  assert.match(
+    html,
+    /svg\[data-focus-active\] \[data-lifecycle-rail\]\s*\{\s*opacity:\s*0;/,
+    'committed node focus must not expose the decorative rail through dimmed nodes',
+  );
+});
+
 test('Node Finder searches and presents the same passport facts', () => {
   const html = render('dataflow', CASES.dataflow);
   assert.match(html, /var authored = node\.getAttribute\('data-node-kind'\)/);
