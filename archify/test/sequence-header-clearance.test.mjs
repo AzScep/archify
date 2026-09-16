@@ -13,7 +13,7 @@ const testDir=path.dirname(fileURLToPath(import.meta.url));
 // Public synthetic labels deliberately exercise a maximum-width participant.
 // This fixture carries no application-specific source or private repository.
 test('sequence headers reserve an icon/brand rail without shrinking or changing literal labels', async t=>{
-  if(!process.env.ARCHIFY_CHROME){t.skip('Set ARCHIFY_CHROME to run the real browser regression.');return;}
+  if(!Object.hasOwn(process.env,'ARCHIFY_CHROME')){t.skip('Set ARCHIFY_CHROME to run the real browser regression.');return;}
   const chrome=findChrome();
   assert.ok(chrome,'The configured browser regression requires Chrome.');
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-sequence-header-'));
