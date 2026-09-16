@@ -8,7 +8,7 @@ on:
       - 'scripts/stage-clean-skill.mjs'
       - 'scripts/third-party-notices-contract.mjs'
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'integrations/deepseek-harness/**'
       - '.github/workflows/dsh.yml'

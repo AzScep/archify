@@ -13,6 +13,7 @@ import {
   segmentRectClearance,
   segmentRectIntersectionLength,
   collectLabelRouteClearance,
+  minimumLabelRouteClearance,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
@@ -149,6 +150,15 @@ test('collectLabelRouteClearance exempts only the owning relationship at an exac
   assert.equal(hits.length, 1);
   assert.equal(hits[0].clearance, 2);
   assert.equal(hits[0].otherRelation, sharedSource);
+});
+
+test('minimumLabelRouteClearance handles receipt sets above the argument limit', () => {
+  const measurements = Array.from(
+    { length: 200_000 },
+    (_, index) => ({ clearance: index === 199_999 ? 1.24 : 9.87 }),
+  );
+  assert.equal(minimumLabelRouteClearance(measurements), 1.2);
+  assert.equal(minimumLabelRouteClearance([]), null);
 });
 
 test('endpoint-side direction distinguishes perpendicular entry from a tangent border run', () => {
@@ -626,7 +636,7 @@ test('textUnits counts emoji-presentation symbols in the BMP as wide', () => {
   assert.equal(textUnits('꥽'), 1);
 });
 
-test('textUnits measures a variation-selector sequence from the selector', () => {
+test('textUnits estimates variation-selector sequences without counting selectors separately', () => {
   // VS16 asks for emoji presentation: the pair renders as one square, so it
   // must stay two units even though the base is now counted wide on its own.
   assert.equal(textUnits('⭐️'), 2); // star
@@ -637,8 +647,7 @@ test('textUnits measures a variation-selector sequence from the selector', () =>
   // renders as a square and is two units, not one.
   assert.equal(textUnits('✈️'), 2); // airplane
   assert.equal(textUnits('❤️'), 2); // red heart
-  // VS15 asks for text presentation. That picks the monochrome glyph without
-  // changing the base's East Asian Width, so the sequence is worth its base.
+  // VS15 retains the base width estimate; actual font advances may differ.
   assert.equal(textUnits('✈︎'), 1); // airplane: U+2708 is Neutral
   assert.equal(textUnits('⭐︎'), 2); // star: U+2B50 is Wide
   // The selector never adds width of its own, alone or in a run.
@@ -650,9 +659,8 @@ test('textUnits measures a variation-selector sequence from the selector', () =>
 test('textUnits keeps a Wide base wide when VS15 asks for text presentation', () => {
   // Regression: VS15 was read as "renders narrow" and applied to the sequence
   // rather than to the base, so every Wide base it followed was measured at
-  // half its advance. A zero-advance selector must never shrink the glyph in
-  // front of it -- that under-measures the label and spills it out of its node
-  // while the layout receipt still reads clean.
+  // half its estimated width. In particular, a CJK font may ignore VS15,
+  // leaving a wide glyph that the former one-unit estimate undercounted.
   for (const base of ['⭐', '❗', '⛔', '⚓', '⚡', '✅', '⭕', '㊙', '〽', '中']) {
     assert.equal(textUnits(base + '︎'), textUnits(base), `VS15 changed the width of ${JSON.stringify(base)}`);
     assert.equal(textUnits(base + '︎'), 2);
