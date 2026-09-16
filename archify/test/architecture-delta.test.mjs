@@ -433,6 +433,22 @@ test('provenance-only changes stay separate from graph changes and remain visibl
   );
 });
 
+test('legacy schema-v1 provenance receipts render a generic notice without inventing details', () => {
+  const base = read(baseFixture);
+  const head = read(baseFixture);
+  base.meta.repository = { url: 'https://github.com/example/one', revision: 'a'.repeat(40) };
+  head.meta.repository = { url: 'https://github.com/example/one', revision: 'b'.repeat(40) };
+  const receipt = compareArchitecture(base, head);
+  delete receipt.provenance;
+  const html = renderDelta(receipt);
+  assert.match(html, /Repository provenance changed/);
+  assert.match(html, /data-provenance-fields="repository metadata"/);
+  assert.match(html, /Repository metadata changed; field details are unavailable in this receipt\./);
+  assert.doesNotMatch(html, /data-change-key="provenance/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+  assert.throws(() => validateArchitectureDeltaHtml(html.replace(/<aside class="provenance-change"[\s\S]*?<\/aside>/, ''), receipt), ArchitectureDeltaError);
+});
+
 test('repository location representation changes stay redacted in provenance output', () => {
   const base = read(baseFixture);
   const head = read(baseFixture);

@@ -732,6 +732,7 @@ function expectedReviewTargetSignature(row) {
 const total = (summary, key) => summary.components[key] + summary.connections[key] + summary.boundaries[key];
 
 function provenanceDetail(provenance) {
+  if (provenance === undefined) return 'Repository metadata changed; field details are unavailable in this receipt.';
   const value = (side, field) => {
     if (!side) return 'undeclared';
     if (field === '/revision') return side.revision?.slice(0, 8) || 'none';
@@ -1264,11 +1265,14 @@ export function validateArchitectureDeltaHtml(html, receipt) {
   const provenanceChanged = receipt.summary?.provenanceChanged === true;
   const provenanceNotices = (html.match(/data-provenance-changed="true"/g) || []).length;
   const provenanceFields = receipt.provenance?.changedFields;
-  const provenanceDescription = provenanceChanged && receipt.provenance ? provenanceDetail(receipt.provenance) : '';
+  const legacyProvenance = receipt.provenance === undefined;
+  const validProvenanceFields = Array.isArray(provenanceFields) && provenanceFields.length > 0;
+  const provenanceDescription = provenanceChanged && (legacyProvenance || validProvenanceFields) ? provenanceDetail(receipt.provenance) : '';
+  const provenanceFieldLabel = legacyProvenance ? 'repository metadata' : validProvenanceFields ? provenanceFields.join(', ') : '';
   if (provenanceNotices !== (provenanceChanged ? 1 : 0)
-    || Boolean(receipt.provenance) !== provenanceChanged
-    || (provenanceChanged && (!Array.isArray(provenanceFields) || provenanceFields.length === 0))
-    || (provenanceChanged && !html.includes(`data-provenance-fields="${esc(provenanceFields.join(', '))}"`))
+    || (!provenanceChanged && !legacyProvenance)
+    || (provenanceChanged && !legacyProvenance && !validProvenanceFields)
+    || (provenanceChanged && !html.includes(`data-provenance-fields="${esc(provenanceFieldLabel)}"`))
     || (provenanceChanged && !html.includes(`<span>${esc(provenanceDescription)}</span>`))) {
     failures.push('provenance change notice does not match the receipt');
   }
