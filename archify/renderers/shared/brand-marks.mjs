@@ -269,32 +269,40 @@ async function readLimited(response, maximum) {
   return Buffer.concat(chunks, total);
 }
 
-// Icon <link> tags live in <head>, but a page's total byte size is driven by
-// its body. Capping the whole page at MAX_HTML_BYTES rejected pages with a
-// tiny head and a large body before a single icon candidate was even looked
-// at. Read incrementally and stop as soon as </head> appears instead of
-// reading (and counting) the rest of the page; only fail closed if the byte
-// budget runs out before a head close is seen.
+// Read only the bounded head, independent of network chunk boundaries. Scan
+// bytes once so many tiny chunks cannot cause repeated concatenation/rescanning.
 async function readHtmlHead(response, maximum) {
-  if (!response.body || typeof response.body[Symbol.asyncIterator] !== 'function') {
-    return (await readLimited(response, maximum)).toString('utf8');
-  }
-  const chunks = [];
+  const chunks = response.body && typeof response.body[Symbol.asyncIterator] === 'function'
+    ? response.body : [await readLimited(response, maximum)];
+  const buffer = Buffer.alloc(maximum);
+  const closing = Buffer.from('</head');
   let total = 0;
-  for await (const value of response.body) {
-    chunks.push(Buffer.from(value));
-    total += value.byteLength;
-    const soFar = Buffer.concat(chunks, total);
-    if (soFar.toString('latin1').toLocaleLowerCase('en-US').includes('</head')) {
-      response.body.destroy?.();
-      return soFar.toString('utf8');
+  let matched = 0;
+  for await (const value of chunks) {
+    const chunk = Buffer.from(value);
+    const length = Math.min(chunk.length, maximum - total);
+    chunk.copy(buffer, total, 0, length);
+    for (let offset = 0; offset < length; offset++) {
+      const byte = chunk[offset];
+      if (matched === closing.length) {
+        if (byte === 0x3e) {
+          response.body?.destroy?.();
+          return buffer.toString('utf8', 0, total + offset + 1);
+        }
+        if (byte === 9 || byte === 10 || byte === 12 || byte === 13 || byte === 32) continue;
+        matched = byte === 0x3c ? 1 : 0;
+      } else {
+        const lower = byte >= 65 && byte <= 90 ? byte + 32 : byte;
+        matched = lower === closing[matched] ? matched + 1 : (byte === 0x3c ? 1 : 0);
+      }
     }
-    if (total > maximum) {
-      response.body.destroy?.();
+    total += length;
+    if (chunk.length > length) {
+      response.body?.destroy?.();
       throw new Error('brand asset is too large');
     }
   }
-  return Buffer.concat(chunks, total).toString('utf8');
+  return buffer.toString('utf8', 0, total);
 }
 
 function attribute(tag, name) {

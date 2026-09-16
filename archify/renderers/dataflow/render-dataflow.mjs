@@ -204,13 +204,11 @@ function validateDataflow() {
   }));
   problems.push(...cleanFlowProblems({
     relations: dataflow.flows,
-    endpointIds: new Set(nodes.keys()),
     obstacles: nodes.values(),
     pathFor,
     diagramType: 'dataflow',
     relationCollection: 'flows',
     obstacleKind: 'node',
-    profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the node to another stage/row'
   }));
   problems.push(...cleanCrossingProblems({
@@ -344,7 +342,21 @@ function pathFor(flow) {
   const { fromSide, toSide } = flowSides(flow);
   const start = ports?.from || anchor(from, fromSide);
   const end = ports?.to || anchor(to, toSide);
-  const points = [start, ...routeVia(flow, from, to, start, end), end];
+  // Drop consecutive duplicate points so a purely vertical (or horizontal)
+  // auto-route never emits a zero-length final segment — SVG derives
+  // marker-end orientation from the last segment, and a degenerate segment
+  // leaves the arrowhead angle undefined (see #169).
+  const rawPoints = [start, ...routeVia(flow, from, to, start, end), end];
+  const points = [];
+  for (const p of rawPoints) {
+    const prev = points.at(-1);
+    if (!prev || Math.abs(p[0] - prev[0]) > 0.0001 || Math.abs(p[1] - prev[1]) > 0.0001) {
+      points.push(p);
+    }
+  }
+  // Guard against an all-degenerate route (e.g. start === end): keep both
+  // endpoints so the path is still well-formed even if the marker is hidden.
+  if (points.length < 2) points.push(end);
   const routed = { d: polylinePath(points), points };
   pathCache.set(flow, routed);
   return routed;

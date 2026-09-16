@@ -188,7 +188,7 @@
   <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="./" aria-label="Archify home">
       <span class="nav-logo-text">Archify</span>
-      <span class="nav-logo-path">/ guide</span>
+      <span class="nav-logo-path" data-en="/ guide" data-zh="/ 场景指南">/ guide</span>
     </a>
     <div class="nav-right">
       <a class="nav-link" href="guide.html" aria-current="page" data-i18n="navGuide">Guide</a>
@@ -246,7 +246,7 @@
     (function () {
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
-      var types = ['architecture','workflow','sequence','dataflow','lifecycle'];
+      var types = [[DIAGRAM_TYPES_JSON]];
       var colors = { architecture:'#0891b2', workflow:'#047857', sequence:'#6d28d9', dataflow:'#b45309', lifecycle:'#be123c' };
       var language = ArchifySiteLanguage.read();
       var activeType = 'all';
@@ -285,7 +285,7 @@
         document.getElementById('samples').innerHTML = t('samples').map(function (sample) { return '<button class="chip" type="button" data-query="'+escapeHtml(sample[1])+'">'+escapeHtml(sample[0])+'</button>'; }).join('');
       }
       function renderFilters() {
-        var labels = { en:{architecture:'Architecture',workflow:'Workflow',sequence:'Sequence',dataflow:'Data flow',lifecycle:'Lifecycle'}, zh:{architecture:'架构',workflow:'工作流',sequence:'时序',dataflow:'数据流',lifecycle:'生命周期'} };
+        var labels = [[DIAGRAM_TYPE_LABELS_JSON]];
         document.getElementById('filters').innerHTML = ['all'].concat(types).map(function (type) { return '<button class="filter '+(activeType === type ? 'active':'')+'" type="button" data-filter="'+type+'">'+escapeHtml(type === 'all' ? t('all') : labels[language][type])+'</button>'; }).join('');
       }
       function renderCards() {
@@ -318,6 +318,7 @@
         document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
         document.getElementById('language').textContent = language === 'zh' ? 'EN' : '中文';
         document.getElementById('language').setAttribute('aria-label', language === 'zh' ? 'Switch to English' : '切换到中文');
+        document.querySelectorAll('[data-en][data-zh]').forEach(function (node) { node.textContent=node.getAttribute(language === 'zh' ? 'data-zh' : 'data-en'); });
         document.querySelectorAll('[data-i18n]').forEach(function (node) { node.textContent=t(node.dataset.i18n); });
         document.querySelectorAll('[data-i18n-html]').forEach(function (node) { node.innerHTML=t(node.dataset.i18nHtml); });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(function (node) { node.placeholder=t(node.dataset.i18nPlaceholder); });
