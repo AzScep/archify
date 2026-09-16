@@ -46,8 +46,8 @@ two parallel relationships.
 
 Authoritative local evidence:
 
-- [Agent Tool Call story source](gallery/sources/agent-tool-call.workflow.json)
-- [compiled Agent Tool Call artifact](gallery/artifacts/agent-tool-call.workflow.html)
+- [Agent Tool Call story source](../docs/gallery/sources/agent-tool-call.workflow.json)
+- [compiled Agent Tool Call artifact](../docs/gallery/artifacts/agent-tool-call.workflow.html)
 - [shared Story Beat implementation](../archify/assets/template.html)
 
 The first implementation action must therefore be **deduplicate semantic edge
