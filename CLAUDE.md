@@ -1,5 +1,5 @@
 # Claude Code instructions
 
-Read and follow [`AGENTS.md`](AGENTS.md).
+Follow [AGENTS.md](AGENTS.md).
 
 @AGENTS.md
