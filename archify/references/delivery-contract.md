@@ -75,7 +75,10 @@ writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
 receipt beside the artifact by default — pass `--out-dir <dir>` to write all of
 them into a separate directory instead (created if missing) when a project
 keeps its testing/evidence artifacts apart from the delivered `.json`/`.html`
-result pair. The receipt binds the source artifact SHA-256 and
+result pair. When that directory differs from the artifact directory, the
+receipt records its absolute path as `sidecars.directory`; sidecar filenames
+resolve there, otherwise beside `artifact.path`. The contact sheet keeps its
+image links relative for portability. The receipt binds the source artifact SHA-256 and
 byte count, identifies `evidenceKind: "automated-browser"`, records READ plus
 Still runtime state, and always reports `visualReview: "pending"`; automated
 browser evidence cannot claim perceptual review.

@@ -217,7 +217,7 @@ test('sidecarPaths places outputs in outDir instead of beside the artifact', () 
 
   const outputs = sidecarPaths(input, { outDir: separateDir });
 
-  assert.equal(fs.existsSync(separateDir), true, 'sidecarPaths must create a missing outDir');
+  assert.equal(fs.existsSync(separateDir), false, 'calculating paths must not create directories');
   assert.equal(path.dirname(outputs.receipt), separateDir);
   assert.equal(path.dirname(outputs.contactSheet), separateDir);
   assert.equal(outputs.screenshots.every((entry) => path.dirname(entry.path) === separateDir), true);
@@ -243,6 +243,9 @@ test('visual-check writes all sidecars into --out-dir end-to-end, none beside th
   assert.equal(result.receipt.status, 'pass');
 
   const outputs = sidecarPaths(input, { outDir });
+  assert.equal(result.receipt.sidecars.directory, outDir);
+  assert.equal(fs.existsSync(path.join(result.receipt.sidecars.directory, result.receipt.sidecars.receipt)), true);
+  assert.equal(fs.existsSync(path.join(result.receipt.sidecars.directory, result.receipt.captures.contactSheet)), true);
   assert.equal(fs.existsSync(outputs.receipt), true);
   assert.equal(fs.existsSync(outputs.contactSheet), true);
   assert.equal(outputs.screenshots.every((entry) => fs.existsSync(entry.path)), true);
