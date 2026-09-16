@@ -25,6 +25,10 @@ jobs:
         run: npm test
         working-directory: archify
 
+      - name: Verify community Hermes adapter
+        if: matrix.node-version == 22
+        run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+
   webm-artifact:
     runs-on: ubuntu-latest
     steps:
