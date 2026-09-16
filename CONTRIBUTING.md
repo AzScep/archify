@@ -73,6 +73,19 @@ ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mj
 
 A browser test skipped because Chrome was unavailable is **skipped**, not passed. Follow [the delivery contract](archify/references/delivery-contract.md) for visual evidence, receipts, and failure stages. Successful validation, atomic delivery, browser checks, and perceptual review establish different claims.
 
+PR CI and tag releases run the same browser regression gate:
+
+```sh
+cd archify
+ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
+```
+
+This command requires a usable Chrome/Chromium and fails when none is available.
+Its maintained file list is in `scripts/run-browser-tests.mjs`; add new browser
+suites there so both workflows keep the same coverage. Ordinary `npm test`
+retains optional browser skips. Real WebM decoding and site-language integration
+remain in the separate `npm run test:webm` gate used by both workflows.
+
 ## Packages and generated artifacts
 
 Viewer maintenance starts in [`viewer/`](viewer/README.md). Edit its source
