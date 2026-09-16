@@ -899,10 +899,12 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
   const authoring = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
   const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
   const fastPath = skill.indexOf('## Fast authoring path');
-  const progressiveReferences = skill.indexOf('references/authoring-contract.md');
+  // A diagnosed repair may link to a reference inside the fast path. Bound
+  // the contract by its next section, not by the first inline link.
+  const fastPathEnd = skill.indexOf('## Type router', fastPath);
 
   assert.ok(fastPath > 0, 'fast authoring path must exist');
-  assert.ok(fastPath < progressiveReferences, 'fast authoring path must precede progressive references');
+  assert.ok(fastPathEnd > fastPath, 'fast authoring path must precede the type router');
   assert.ok(skill.trimEnd().split('\n').length <= 160, 'ordinary authors must not ingest the viewer catalogue');
   for (const required of [
     'one matching schema',
@@ -930,7 +932,7 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
     'supportedFixes',
   ]) {
     assert.match(
-      skill.slice(fastPath, progressiveReferences),
+      skill.slice(fastPath, fastPathEnd),
       new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
     );
   }
