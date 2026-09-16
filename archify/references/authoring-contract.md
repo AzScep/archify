@@ -133,9 +133,10 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time unless several edges share a constrained channel. In that case, inspect
-`validate <type> <candidate.json> --layout-json`, plan the smallest coupled change
-using measured rectangles, paths and label masks, then validate it together.
+a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
+validate it together. Architecture/workflow provide layout evidence through
+`validate <type> <candidate.json> --layout-json`; for other types, use validation
+diagnostics and the rendered SVG geometry.
 Before adding manual routes, check whether unnecessary agent-added controls
 disable automatic port spread; preserve user-required route intent. Use the
 measured clearance rules above rather than guessing coordinates.
