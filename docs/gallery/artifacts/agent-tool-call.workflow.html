@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5356,29 +5365,29 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Edge labels -->
         <g data-detail="context" data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check">
           <rect x="569.2" y="282" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="610.2" y="292" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
+          <text x="610.2" y="292" class="t-edge-security" font-size="8" text-anchor="middle">needs approval?</text>
         </g>
         <g data-detail="context" data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied">
           <rect x="721.2" y="422" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="432" class="t-security" font-size="8" text-anchor="middle">denied</text>
+          <text x="740.6" y="432" class="t-edge-security" font-size="8" text-anchor="middle">denied</text>
         </g>
 
 
         <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request">
           <rect x="334.6" y="233" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="349.6" y="243" class="t-backend" font-size="8" text-anchor="middle">plan</text>
+          <text x="349.6" y="243" class="t-edge-emphasis" font-size="8" text-anchor="middle">plan</text>
         </g>
 
         <g data-detail="context" data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result">
           <rect x="704.4" y="559" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="569" class="t-database" font-size="8" text-anchor="middle">record result</text>
+          <text x="740.6" y="569" class="t-edge-dashed" font-size="8" text-anchor="middle">record result</text>
         </g>
 
 
 
         <g data-detail="context" data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory">
           <rect x="344" y="501" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="382.6" y="511" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
+          <text x="382.6" y="511" class="t-edge-dashed" font-size="8" text-anchor="middle">trace + memory</text>
         </g>
 
         <!-- Legend -->

@@ -27,9 +27,10 @@ import {
   chosenSide,
   roundedPath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   arrowClassMap,
-  variantAccent
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const stateTextFit = {
@@ -465,7 +466,7 @@ function renderTransitionPath(transition, index) {
   const [cls, marker] = arrowClassMap[transition.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(transition);
   const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
-  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderTransitionLabel(transition, index) {
@@ -480,7 +481,7 @@ function renderTransitionLabel(transition, index) {
     : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}
         </g>`;
 }
 
@@ -519,7 +520,7 @@ function renderLifecycleRail() {
     .map((state) => state.col);
   if (!mainCols.length) return '';
   const railEnd = layout.phaseXs[Math.max(...mainCols)] + 38;
-  return `        <path d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
+  return `        <path data-lifecycle-rail="" d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
 }
 
 function renderSvg() {
