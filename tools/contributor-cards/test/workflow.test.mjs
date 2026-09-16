@@ -4,7 +4,8 @@ import fs from 'node:fs/promises';
 const workflow = await fs.readFile(new URL('../../../.github/workflows/contributor-cards.yml', import.meta.url), 'utf8');
 // Security contract checks guard future edits to the privileged event path.
 test('privileged automation reads the default branch and does not interpolate PR text into shell', () => {
-  assert.match(workflow, /pull_request_target:\s+types: \[closed\]/);
+  assert.match(workflow, /push:\s+branches: \[main, dev\]/);
+  assert.match(workflow, /pull_request_target:\s+types: \[closed\]\s+branches: \[main\]/);
   assert.match(workflow, /github\.event\.pull_request\.merged == true/);
   assert.match(workflow, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
   assert.doesNotMatch(workflow, /pull_request\.head|refs\/pull|pull_request\.merge_commit_sha/);

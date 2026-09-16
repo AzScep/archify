@@ -31,7 +31,9 @@ Each PR has one filename and one comment marker. Unchanged images do not create 
 - Automatic publication after a human-authored PR merges into `main` in `tt-a1i/archify`.
 - **Run workflow** with a merged PR number for preview or backfill. **Publish** defaults to false; enable it to post/update the reply.
 - A downloadable workflow artifact retained for seven days; published PNGs live in the data branch independently of that retention.
-- Scoped unit/browser checks when this tool or its workflow changes.
+- Scoped unit/browser checks on PRs and pushes to `dev` or `main` when this tool or its workflow changes.
+
+During dev integration, use the local CLI preview and the scoped CI checks. Merging into `dev` does not send a card. The manual Actions renderer and automatic publication become usable after the tool is promoted to the default branch.
 
 Privileged runs explicitly check out the default branch, never the PR head or merge ref. PR text is read as JSON, validated and HTML-escaped; it is never interpolated into shell commands or JavaScript. Exported HTML has a restrictive content policy, and Chrome blocks network requests during rendering. Checkout does not persist credentials. Job permissions are limited to repository content and PR comments. Per-PR concurrency prevents duplicate replies; publication handles races between different PRs.
 
