@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const integrationRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(integrationRoot, '..', '..');
+const python = process.env.PYTHON || (process.platform === 'win32' ? 'py' : 'python3');
+const pythonArgs = !process.env.PYTHON && process.platform === 'win32' ? ['-3'] : [];
 
 function read(relativePath) {
   return fs.readFileSync(path.join(integrationRoot, relativePath), 'utf8');
@@ -36,7 +38,7 @@ test('plugin is skill-only and does not declare native tools', () => {
 });
 
 test('register() registers the in-repo Skill without a packed copy', () => {
-  const result = spawnSync('python3', ['-c', `
+  const result = spawnSync(python, [...pythonArgs, '-c', `
 import importlib.util
 from pathlib import Path
 plugin = Path(${JSON.stringify(path.join(integrationRoot, '__init__.py'))})
@@ -102,7 +104,7 @@ test('Archify core does not import or branch on Hermes Agent', () => {
 
 
 test('standalone plugin resolves configured homes and fails when no Skill exists', () => {
-  const result = spawnSync('python3', ['-c', `
+  const result = spawnSync(python, [...pythonArgs, '-c', `
 import importlib.util, os, shutil, tempfile
 from pathlib import Path
 with tempfile.TemporaryDirectory() as tmp:
