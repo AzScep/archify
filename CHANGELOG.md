@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed
+- **Conservative VS15 text-width estimates.** Text-presentation selectors retain the base character's estimated width instead of forcing every sequence to one unit. This prevents wide labels, including CJK text whose font ignores VS15, from passing layout checks at half their estimated width. Actual glyph widths remain font-dependent; some text-presentation labels may now need more space. VS16 emoji estimates and text without selectors are unchanged.
 - **Readable renderer failures.** `render` and direct renderer entry points format classified input, schema, layout, and output failures without Node stacks. Filesystem failures identify the failing operation instead of labelling output errors as unreadable input; successful artifact bytes and existing validation/delivery receipt formats remain unchanged.
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
