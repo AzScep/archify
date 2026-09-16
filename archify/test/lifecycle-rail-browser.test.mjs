@@ -10,7 +10,8 @@ import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
-const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const browserRequested = Object.hasOwn(process.env, 'ARCHIFY_CHROME');
+const chromePath = browserRequested ? findChrome() : null;
 
 async function evaluate(browser, sessionId, expression, awaitPromise = false) {
   const response = await browser.cdp.send('Runtime.evaluate', {
@@ -50,8 +51,9 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('lifecycle rail stays ordinary in READ and hides for hover, relationship preview, and committed focus', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+  skip: browserRequested ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
+  assert.ok(chromePath, 'The configured browser regression requires Chrome.');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-lifecycle-rail-browser-'));
   const artifact = path.join(tmp, 'agent-run.html');
   execFileSync(process.execPath, [
