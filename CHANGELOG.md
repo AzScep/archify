@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **GitHub Copilot agent-switcher target.** The Start page agent switcher, README EN/ZH quick start, and landing copy add `github-copilot` alongside `cursor`, `codex`, `claude-code`, and `opencode`. It installs the same checked Skill and zero-dependency renderers via `npx skills add tt-a1i/archify --skill archify --agent github-copilot ...`; no vendor-specific fork, renderer, or schema behavior was added.
+
 ### Fixed
 - **Conservative VS15 text-width estimates.** Text-presentation selectors retain the base character's estimated width instead of forcing every sequence to one unit. This prevents wide labels, including CJK text whose font ignores VS15, from passing layout checks at half their estimated width. Actual glyph widths remain font-dependent; some text-presentation labels may now need more space. VS16 emoji estimates and text without selectors are unchanged.
 - **Readable renderer failures.** `render` and direct renderer entry points format classified input, schema, layout, and output failures without Node stacks. Filesystem failures identify the failing operation instead of labelling output errors as unreadable input; successful artifact bytes and existing validation/delivery receipt formats remain unchanged.
