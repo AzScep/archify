@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { parseFragment } from 'parse5';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -10,6 +11,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-checks-'));
 const checker = path.join(skillRoot, 'scripts/check-render-output.mjs');
+
+test('render output check: finite_svg preserves slashes in unquoted HTML attribute values', () => {
+  for (const [markup, expected] of [
+    ['<line x1=NaN/>', 'NaN/'],
+    ['<line x1=NaN />', 'NaN'],
+    ['<line x1="NaN"/>', 'NaN'],
+    ['<line x1=NaN/ x2=10 />', 'NaN/'],
+    ['<line x1=NaN/></line>', 'NaN/'],
+  ]) {
+    const svg = parseFragment(`<svg>${markup}</svg>`).childNodes[0];
+    const value = svg.childNodes[0].attrs.find((attr) => attr.name === 'x1').value;
+    assert.equal(value, expected, markup);
+    const { result } = checkHtml('unquoted-attribute-slash', markup);
+    const check = result.checks.find((entry) => entry.name === 'finite_svg');
+    assert.equal(check.ok, false, markup);
+    assert.deepEqual(check.details, [`line x1="${value}"`], markup);
+  }
+});
 
 function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160') {
   const htmlPath = path.join(tmp, `${name}.html`);
