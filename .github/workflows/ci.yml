@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
 jobs:
@@ -185,9 +185,29 @@ jobs:
       - name: Validate packaged skill without installing dependencies
         run: node scripts/package-smoke.mjs
 
+  windows-test-portability:
+    name: Windows test portability
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install test dependencies
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Verify Windows-sensitive regression fixtures
+        run: >-
+          node --test
+          --test-name-pattern="Git checkout preserves|clean staging preserves index modes|workflow migration cleanup failure|preview runs from an installed skill"
+          archify/test/checkout-line-endings.test.mjs
+          archify/test/clean-skill-staging.test.mjs
+          archify/test/workflow-migration.test.mjs
+          archify/test/cli.test.mjs
+
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke]
+    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability]
     runs-on: ubuntu-latest
     concurrency:
       group: github-pages
