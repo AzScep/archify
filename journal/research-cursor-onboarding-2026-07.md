@@ -28,7 +28,7 @@ The unpinned command is the better user-facing default because it receives insta
 
 ## Post-research acceptance
 
-The live gate identified below subsequently passed on the same date. A fresh Cursor Agent CLI `2026.07.20-8cc9c0b` session discovered the project installation at `.agents/skills/archify/SKILL.md`, ran `doctor`, authored typed Architecture JSON, and delivered a showcase artifact with 9/9 checks and zero composition findings. Independent validation plus built-in-browser review confirmed the receipt, readable main/failure paths, working authored chapter, and zero console warnings or errors. See the dated [Cursor acceptance record](./cursor-acceptance-2026-07.md).
+The live gate identified below subsequently passed on the same date. A fresh Cursor Agent CLI `2026.07.20-8cc9c0b` session discovered the project installation at `.agents/skills/archify/SKILL.md`, ran `doctor`, authored typed Architecture JSON, and delivered a showcase artifact with 9/9 checks and zero composition findings. Independent validation plus built-in-browser review confirmed the receipt, readable main/failure paths, working authored chapter, and zero console warnings or errors. See the dated [Cursor acceptance record](../docs/cursor-acceptance-2026-07.md).
 
 This supports first-class Cursor onboarding for the recorded environment. It still does not claim identical quality across every Cursor release or model.
 

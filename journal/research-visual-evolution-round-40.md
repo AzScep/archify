@@ -96,7 +96,7 @@ the adapted product lesson.
 
 ### The hero already owns the correct artifact
 
-[`docs/index.html`](index.html) contains:
+[`docs/index.html`](../docs/index.html) contains:
 
 - `#hero-proof-stage` inside the hero;
 - three native tab buttons for Signal Flow, Blueprint, and Classic;
