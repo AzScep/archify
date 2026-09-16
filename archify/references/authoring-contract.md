@@ -105,6 +105,7 @@ in the generated viewer.
 
 - Node anchors start at side midpoints. `left`/`right` change the horizontal endpoint; `top`/`bottom` change the vertical endpoint. For an automatic Architecture relationship, unobstructed facing ports whose axis offset is under 16px may share one horizontal or vertical axis when both endpoints retain the 16px corner gutter. If exactly one endpoint belongs to a spread group, only its unshared counterpart moves; relationships spread at both endpoints keep their distinct ports and outside bridge.
 - A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction.
+- In architecture, data-flow, and lifecycle diagrams, explicit `route: "straight"` requests one direct segment, which may be diagonal when endpoint sides are not pinned. The artifact checker preserves this intent; explicit sides, opaque-node clearance, and other quality gates still apply. `via` takes precedence and retains existing rules, including data-flow's requirement for orthogonal via segments.
 - Automatic Port Spread is a default renderer behavior for architecture, workflow, data-flow, and lifecycle diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
 - Showcase route rhythm: every nonzero segment must be at least 8px; every interior segment must be at least 16px. When spread ports are nearly parallel, the router uses a 24px endpoint stub and a 16px outside bridge instead of manufacturing a tiny dogleg.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
@@ -133,7 +134,13 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time.
+a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
+validate it together. Architecture/workflow provide layout evidence through
+`validate <type> <candidate.json> --layout-json`; for other types, use validation
+diagnostics and the rendered SVG geometry.
+Before adding manual routes, check whether unnecessary agent-added controls
+disable automatic port spread; preserve user-required route intent. Use the
+measured clearance rules above rather than guessing coordinates.
 
 ### Repair order
 
@@ -160,6 +167,27 @@ progression. Start new workflows on `readable-v2`; retain `fixed-v1` only for
 legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
 edge labels, and route retries and exception returns outside the main lane
 corridor.
+
+#### Workflow viewport repair
+
+When `viewer/viewport-overflow` includes `workflowLanes`, inspect the tallest
+rendered frames and their node span before changing the source. Measurements
+are CSS pixels; space above/below nodes includes lane titles and routing, so it
+is not a removable-space budget. Frame IDs identify rendered lane indices.
+
+Run `validate workflow <source.json> --layout-json` and match those frames to
+source lanes and nodes. Check whether many steps share the last logical column
+and use large `yOffset` values. Readable-v2 currently reserves symmetric space
+around offsets and shares the base content height between lanes, so increasing
+one offset can enlarge otherwise sparse lanes.
+
+Where the source's ownership and explicit geometry permit, redistribute steps
+across logical columns and meaningful lanes, keeping the main path monotonic.
+Preserve every required node, relationship, label and semantic check. If ownership
+or absolute pins prevent reflow, report that constraint instead of merging lanes
+or moving pins automatically. Validate the changed JSON, deliver a fresh HTML,
+then rerun browser checks and inspect the first screen; a static pass alone does
+not settle viewport fit. These are repair directions, not guaranteed coordinates.
 
 ### Sequence
 

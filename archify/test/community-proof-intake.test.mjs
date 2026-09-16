@@ -87,7 +87,7 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Do not include secrets',
     'Agent-first',
     'diagnostics[]',
-    'Start from the latest `main`',
+    'Start from the latest `dev`',
     'tracked-only, symlink-safe',
     'is **skipped**, not passed',
   ]) {

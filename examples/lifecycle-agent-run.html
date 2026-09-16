@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5164,7 +5173,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / Terminal exits</text>
 
         <!-- Primary lifecycle rail -->
-        <path d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-lifecycle-rail="" d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Transition paths -->
         <path data-edge-from="executing" data-edge-to="approval" data-edge-key="0" data-edge-id="approval-needed" data-composition-points="402,188;402,278" d="M 402 188 L 402 278" class="a-security" data-animate="edge" style="--step:0" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
@@ -6351,8 +6360,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -7811,7 +7823,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -8291,7 +8303,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -8318,7 +8330,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -8599,7 +8611,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -8800,7 +8815,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -8886,7 +8901,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -9002,7 +9017,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

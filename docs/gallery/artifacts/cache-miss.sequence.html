@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5299,89 +5308,89 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Participants -->
         <g id="node-user" data-node-id="user" data-node-label="User" tabindex="0" role="button" aria-label="Focus User, browser session, Sequence participant" aria-pressed="false" data-node-kind="external" data-node-sublabel="browser session" data-node-context="Sequence participant">
           <title>User · browser session · Sequence participant</title>
-          <rect x="62" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="62" y="72" width="113" height="54" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <rect x="62" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="62" y="72" width="113" height="60" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(68 78) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="118.5" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
-          <text data-detail="context" x="118.5" y="111" class="t-muted" font-size="7" text-anchor="middle">browser session</text>
+          <text data-node-label="" data-detail-anchor="" x="118.5" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+          <text data-detail="context" x="118.5" y="122" class="t-muted" font-size="7" text-anchor="middle">browser session</text>
         </g>
 
         <g id="node-web" data-node-id="web" data-node-label="Web App" tabindex="0" role="button" aria-label="Focus Web App, React UI, Sequence participant" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="React UI" data-node-context="Sequence participant">
           <title>Web App · React UI · Sequence participant</title>
-          <rect x="206.16666666666663" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="206.16666666666663" y="72" width="113" height="54" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <rect x="206.16666666666663" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="206.16666666666663" y="72" width="113" height="60" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(212.16666666666663 78) scale(0.6875)">
             <rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="262.66666666666663" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Web App</text>
-          <text data-detail="context" x="262.66666666666663" y="111" class="t-muted" font-size="7" text-anchor="middle">React UI</text>
+          <text data-node-label="" data-detail-anchor="" x="262.66666666666663" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Web App</text>
+          <text data-detail="context" x="262.66666666666663" y="122" class="t-muted" font-size="7" text-anchor="middle">React UI</text>
         </g>
 
         <g id="node-api" data-node-id="api" data-node-label="API" tabindex="0" role="button" aria-label="Focus API, request handler, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="request handler" data-node-context="Sequence participant">
           <title>API · request handler · Sequence participant</title>
-          <rect x="350.3333333333333" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="350.3333333333333" y="72" width="113" height="54" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="350.3333333333333" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="350.3333333333333" y="72" width="113" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(356.3333333333333 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="406.8333333333333" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API</text>
-          <text data-detail="context" x="406.8333333333333" y="111" class="t-muted" font-size="7" text-anchor="middle">request handler</text>
+          <text data-node-label="" data-detail-anchor="" x="406.8333333333333" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API</text>
+          <text data-detail="context" x="406.8333333333333" y="122" class="t-muted" font-size="7" text-anchor="middle">request handler</text>
         </g>
 
         <g id="node-auth" data-node-id="auth" data-node-label="Auth" tabindex="0" role="button" aria-label="Focus Auth, JWT verify, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="JWT verify" data-node-context="Sequence participant">
           <title>Auth · JWT verify · Sequence participant</title>
-          <rect x="494.5" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="494.5" y="72" width="113" height="54" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <rect x="494.5" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="494.5" y="72" width="113" height="60" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(500.5 78) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="551" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth</text>
-          <text data-detail="context" x="551" y="111" class="t-muted" font-size="7" text-anchor="middle">JWT verify</text>
+          <text data-node-label="" data-detail-anchor="" x="551" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth</text>
+          <text data-detail="context" x="551" y="122" class="t-muted" font-size="7" text-anchor="middle">JWT verify</text>
         </g>
 
         <g id="node-redis" data-node-id="redis" data-node-label="Redis" tabindex="0" role="button" aria-label="Focus Redis, cache, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="cache" data-node-context="Sequence participant">
           <title>Redis · cache · Sequence participant</title>
-          <rect x="638.6666666666666" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="638.6666666666666" y="72" width="113" height="54" rx="6" class="c-database" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <rect x="638.6666666666666" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="638.6666666666666" y="72" width="113" height="60" rx="6" class="c-database" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(644.6666666666666 78) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695.1666666666666" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis</text>
-          <text data-detail="context" x="695.1666666666666" y="111" class="t-muted" font-size="7" text-anchor="middle">cache</text>
+          <text data-node-label="" data-detail-anchor="" x="695.1666666666666" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis</text>
+          <text data-detail="context" x="695.1666666666666" y="122" class="t-muted" font-size="7" text-anchor="middle">cache</text>
         </g>
 
         <g id="node-db" data-node-id="db" data-node-label="Postgres" tabindex="0" role="button" aria-label="Focus Postgres, source of truth, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="source of truth" data-node-context="Sequence participant">
           <title>Postgres · source of truth · Sequence participant</title>
-          <rect x="782.8333333333333" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="782.8333333333333" y="72" width="113" height="54" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <rect x="782.8333333333333" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="782.8333333333333" y="72" width="113" height="60" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(788.8333333333333 78) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="839.3333333333333" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Postgres</text>
-          <text data-detail="context" x="839.3333333333333" y="111" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
+          <text data-node-label="" data-detail-anchor="" x="839.3333333333333" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Postgres</text>
+          <text data-detail="context" x="839.3333333333333" y="122" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
         </g>
 
         <g id="node-trace" data-node-id="trace" data-node-label="Trace" tabindex="0" role="button" aria-label="Focus Trace, async event, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="async event" data-node-context="Sequence participant">
           <title>Trace · async event · Sequence participant</title>
-          <rect x="927" y="72" width="113" height="54" rx="6" class="c-mask"/>
-          <rect x="927" y="72" width="113" height="54" rx="6" class="c-messagebus" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <rect x="927" y="72" width="113" height="60" rx="6" class="c-mask"/>
+          <rect x="927" y="72" width="113" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(933 78) scale(0.6875)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="983.5" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace</text>
-          <text data-detail="context" x="983.5" y="111" class="t-muted" font-size="7" text-anchor="middle">async event</text>
+          <text data-node-label="" data-detail-anchor="" x="983.5" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace</text>
+          <text data-detail="context" x="983.5" y="122" class="t-muted" font-size="7" text-anchor="middle">async event</text>
         </g>
 
         <!-- Legend -->
@@ -6431,8 +6440,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -7891,7 +7903,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -8371,7 +8383,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -8398,7 +8410,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -8679,7 +8691,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -8880,7 +8895,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -8966,7 +8981,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -9082,7 +9097,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

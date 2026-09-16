@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5349,62 +5358,62 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Flow labels -->
         <g data-detail="context" data-edge-from="checkout" data-edge-to="orders" data-edge-label="OrderPlaced" data-edge-key="0">
           <rect x="174.55" y="136" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="207.5" y="147" class="t-backend" font-size="8" text-anchor="middle">OrderPlaced</text>
+          <text x="207.5" y="147" class="t-edge-emphasis" font-size="8" text-anchor="middle">OrderPlaced</text>
         <text data-detail="fine" x="207.5" y="158" class="t-dim" font-size="7" text-anchor="middle">schema v1</text>
         </g>
         <g data-detail="context" data-edge-from="billing" data-edge-to="payments" data-edge-label="PaymentCaptured" data-edge-key="1">
           <rect x="164.75" y="364" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="207.5" y="375" class="t-backend" font-size="8" text-anchor="middle">PaymentCaptured</text>
+          <text x="207.5" y="375" class="t-edge-emphasis" font-size="8" text-anchor="middle">PaymentCaptured</text>
         <text data-detail="fine" x="207.5" y="386" class="t-dim" font-size="7" text-anchor="middle">schema v2</text>
         </g>
         <g data-detail="context" data-edge-from="orders" data-edge-to="validate" data-edge-label="ordered orders" data-edge-key="2">
           <rect x="382.2" y="136" width="80.6" height="27" rx="4" class="c-mask"/>
-          <text x="422.5" y="147" class="t-backend" font-size="8" text-anchor="middle">ordered orders</text>
+          <text x="422.5" y="147" class="t-edge-emphasis" font-size="8" text-anchor="middle">ordered orders</text>
         <text data-detail="fine" x="422.5" y="158" class="t-dim" font-size="7" text-anchor="middle">consumer group</text>
         </g>
         <g data-detail="context" data-edge-from="payments" data-edge-to="enrich" data-edge-label="payment facts" data-edge-key="3">
           <rect x="384.65" y="364" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="422.5" y="375" class="t-backend" font-size="8" text-anchor="middle">payment facts</text>
+          <text x="422.5" y="375" class="t-edge-emphasis" font-size="8" text-anchor="middle">payment facts</text>
         <text data-detail="fine" x="422.5" y="386" class="t-dim" font-size="7" text-anchor="middle">at-least-once</text>
         </g>
         <g data-detail="context" data-edge-from="validate" data-edge-to="state" data-edge-label="valid order" data-edge-key="4">
           <rect x="597.05" y="193" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="630" y="204" class="t-backend" font-size="8" text-anchor="middle">valid order</text>
+          <text x="630" y="204" class="t-edge-emphasis" font-size="8" text-anchor="middle">valid order</text>
         <text data-detail="fine" x="630" y="215" class="t-dim" font-size="7" text-anchor="middle">idempotent</text>
         </g>
         <g data-detail="context" data-edge-from="enrich" data-edge-to="state" data-edge-label="enriched payment" data-edge-key="5">
           <rect x="584.8" y="307" width="90.4" height="27" rx="4" class="c-mask"/>
-          <text x="630" y="318" class="t-muted" font-size="8" text-anchor="middle">enriched payment</text>
+          <text x="630" y="318" class="t-edge-default" font-size="8" text-anchor="middle">enriched payment</text>
         <text data-detail="fine" x="630" y="329" class="t-dim" font-size="7" text-anchor="middle">idempotent</text>
         </g>
         <g data-detail="context" data-edge-from="state" data-edge-to="fulfillment" data-edge-label="ready orders" data-edge-key="6">
           <rect x="809.6" y="193" width="70.8" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="204" class="t-backend" font-size="8" text-anchor="middle">ready orders</text>
+          <text x="845" y="204" class="t-edge-emphasis" font-size="8" text-anchor="middle">ready orders</text>
         <text data-detail="fine" x="845" y="215" class="t-dim" font-size="7" text-anchor="middle">read model</text>
         </g>
         <g data-detail="context" data-edge-from="state" data-edge-to="analytics" data-edge-label="order facts" data-edge-key="7">
           <rect x="812.05" y="307" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="318" class="t-muted" font-size="8" text-anchor="middle">order facts</text>
+          <text x="845" y="318" class="t-edge-default" font-size="8" text-anchor="middle">order facts</text>
         <text data-detail="fine" x="845" y="329" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
         </g>
         <g data-detail="context" data-edge-from="validate" data-edge-to="dlq" data-edge-label="invalid event" data-edge-key="8">
           <rect x="262.15" y="539" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="300" y="550" class="t-security" font-size="8" text-anchor="middle">invalid event</text>
+          <text x="300" y="550" class="t-edge-security" font-size="8" text-anchor="middle">invalid event</text>
         <text data-detail="fine" x="300" y="561" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
         </g>
         <g data-detail="context" data-edge-from="enrich" data-edge-to="dlq" data-edge-label="poison event" data-edge-key="9">
           <rect x="602.1" y="677" width="70.8" height="27" rx="4" class="c-mask"/>
-          <text x="637.5" y="688" class="t-security" font-size="8" text-anchor="middle">poison event</text>
+          <text x="637.5" y="688" class="t-edge-security" font-size="8" text-anchor="middle">poison event</text>
         <text data-detail="fine" x="637.5" y="699" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
         </g>
         <g data-detail="context" data-edge-from="dlq" data-edge-to="ops" data-edge-label="failure sample" data-edge-key="10">
           <rect x="804.7" y="526" width="80.6" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="537" class="t-security" font-size="8" text-anchor="middle">failure sample</text>
+          <text x="845" y="537" class="t-edge-security" font-size="8" text-anchor="middle">failure sample</text>
         <text data-detail="fine" x="845" y="548" class="t-dim" font-size="7" text-anchor="middle">restricted</text>
         </g>
         <g data-detail="context" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay" data-edge-key="11">
           <rect x="809.75" y="622" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="852.5" y="633" class="t-messagebus" font-size="8" text-anchor="middle">approved replay</text>
+          <text x="852.5" y="633" class="t-edge-dashed" font-size="8" text-anchor="middle">approved replay</text>
         <text data-detail="fine" x="852.5" y="644" class="t-dim" font-size="7" text-anchor="middle">audited batch</text>
         </g>
 
@@ -6455,8 +6464,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -7915,7 +7927,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -8395,7 +8407,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -8422,7 +8434,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -8703,7 +8715,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -8904,7 +8919,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -8990,7 +9005,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -9106,7 +9121,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

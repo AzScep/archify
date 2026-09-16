@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -108,7 +108,7 @@ if (svgMatches.length === 1) {
   addCheck(
     'orthogonal_arrows',
     diagonal.length === 0,
-    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: ${arrow.raw}`),
+    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
   const relationshipCrossings = collectRelationshipCrossings(arrows);
   const compositionFrames = collectCompositionFrames(beforeLegend);
@@ -170,9 +170,7 @@ if (svgMatches.length === 1) {
       ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
-      minLabelRouteClearance: labelRouteMeasurements.length
-        ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
-        : null,
+      minLabelRouteClearance: minimumLabelRouteClearance(labelRouteMeasurements),
       desktopReadabilityIssues: desktopReadabilityIssue ? 1 : 0,
       minProjectedNodeTextPx: desktopReadabilityIssue?.projectedFontPx ?? null,
       ...roundedRouteMetrics(routeMetrics),
@@ -235,6 +233,7 @@ if (svgMatches.length === 1) {
       ...(desktopReadabilityIssue ? [{
         severity: desktopReadabilityIsError ? 'error' : 'warning',
         code: 'composition/desktop-readability',
+        ...(desktopReadabilityIssue.nodeId ? { nodeId: desktopReadabilityIssue.nodeId } : {}),
         viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
         viewportHeight: DESKTOP_READABILITY_VIEWPORT.height,
         availableDiagramWidth: DESKTOP_READER_DIAGRAM_WIDTH,
@@ -322,6 +321,12 @@ function collectArrows(fragment) {
       kind: tag[1].toLowerCase(),
       index: index += 1,
       raw,
+      // Trust route intent only for a semantic edge with one visible direct
+      // segment. A stale marker on bent/curved geometry cannot waive the gate.
+      authoredStraight: attrs['data-composition-route'] === 'straight'
+        && Boolean(attrs['data-edge-from'] && attrs['data-edge-to'])
+        && segments.length === 1 && borderSegments.length === 1
+        && (tag[1].toLowerCase() === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
       segments,
       borderSegments,
       routePoints: parseRoutePoints(attrs['data-composition-points']) || (
@@ -583,6 +588,7 @@ function straightPathSegments(d) {
 }
 
 function diagonalStraightSegments(arrow) {
+  if (arrow.authoredStraight) return [];
   return arrow.borderSegments.flatMap(({ start, end }, segmentIndex) => (
     Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
       ? [{ segmentIndex, start, end }]
@@ -652,7 +658,20 @@ function collectDesktopReadability(svgAttrs, fragment) {
   if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;
-  for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
+  const nodeOwners = [];
+  // Walk groups alongside text so nested decoration retains the owning node,
+  // without leaking that identity into a following boundary or loose label.
+  for (const match of fragment.matchAll(/<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<text\b([^>]*)>([\s\S]*?)<\/text>|<g\b[^>]*>|<\/g\s*>/gi)) {
+    // Comment and CDATA contents cannot open or close a real SVG group.
+    if (match[0].startsWith('<!')) continue;
+    if (match[1] === undefined) {
+      if (/^<\/g/i.test(match[0])) nodeOwners.pop();
+      else if (!/\/\s*>$/.test(match[0])) {
+        const attrs = parseAttrs(match[0]);
+        nodeOwners.push(attrs['data-node-id'] || nodeOwners.at(-1));
+      }
+      continue;
+    }
     const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
     const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
     const context = /\bdata-detail\s*=\s*"context"/i.test(match[1]);
@@ -663,6 +682,7 @@ function collectDesktopReadability(svgAttrs, fragment) {
     const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
     if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
     const candidate = {
+      ...(nodeOwners.at(-1) ? { nodeId: nodeOwners.at(-1) } : {}),
       viewBoxWidth,
       scale,
       text: stripTags(match[2]).trim(),

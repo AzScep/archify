@@ -4084,6 +4084,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4354,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4437,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5334,45 +5343,45 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="clients" data-edge-to="edge" data-edge-label="HTTPS" data-edge-key="0">
           <rect x="178" y="310" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="195" y="320" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
+          <text x="195" y="320" class="t-edge-emphasis" font-size="8" text-anchor="middle">HTTPS</text>
         </g>
         <g data-detail="context" data-edge-from="edge" data-edge-to="gateway" data-edge-label="mTLS" data-edge-key="1">
           <rect x="378" y="310" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="393" y="320" class="t-security" font-size="8" text-anchor="middle">mTLS</text>
+          <text x="393" y="320" class="t-edge-security" font-size="8" text-anchor="middle">mTLS</text>
         </g>
         <g data-detail="context" data-edge-from="gateway" data-edge-to="api_a" data-edge-label="VPC route" data-edge-key="2">
           <rect x="567.4" y="265" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="594" y="275" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+          <text x="594" y="275" class="t-edge-emphasis" font-size="8" text-anchor="middle">VPC route</text>
         </g>
         <g data-detail="context" data-edge-from="gateway" data-edge-to="api_b" data-edge-label="VPC route" data-edge-key="3">
           <rect x="567.4" y="375" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="594" y="385" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+          <text x="594" y="385" class="t-edge-emphasis" font-size="8" text-anchor="middle">VPC route</text>
         </g>
         <g data-detail="context" data-edge-from="api_a" data-edge-to="redis" data-edge-label="cache" data-edge-key="4">
           <rect x="786" y="206" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="803" y="216" class="t-muted" font-size="8" text-anchor="middle">cache</text>
+          <text x="803" y="216" class="t-edge-default" font-size="8" text-anchor="middle">cache</text>
         </g>
         <g data-detail="context" data-edge-from="api_b" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="5">
           <rect x="788" y="416" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="803" y="426" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
+          <text x="803" y="426" class="t-edge-default" font-size="8" text-anchor="middle">SQL</text>
         </g>
         <g data-detail="context" data-edge-from="api_a" data-edge-to="events" data-edge-label="publish" data-edge-key="6">
           <rect x="878.7" y="150" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="900.5" y="160" class="t-messagebus" font-size="8" text-anchor="middle">publish</text>
+          <text x="900.5" y="160" class="t-edge-dashed" font-size="8" text-anchor="middle">publish</text>
         </g>
 
 
         <g data-detail="context" data-edge-from="postgres" data-edge-to="replica" data-edge-label="cross-region WAL" data-edge-key="9">
           <rect x="959.6" y="519" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="1003" y="529" class="t-security" font-size="8" text-anchor="middle">cross-region WAL</text>
+          <text x="1003" y="529" class="t-edge-security" font-size="8" text-anchor="middle">cross-region WAL</text>
         </g>
         <g data-detail="context" data-edge-from="worker" data-edge-to="audit" data-edge-label="evidence" data-edge-key="10">
           <rect x="1228.8" y="398" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="1253" y="408" class="t-messagebus" font-size="8" text-anchor="middle">evidence</text>
+          <text x="1253" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">evidence</text>
         </g>
         <g data-detail="context" data-edge-from="worker" data-edge-to="observability" data-edge-label="OTLP" data-edge-key="11">
           <rect x="1238" y="203.5" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="1253" y="213.5" class="t-messagebus" font-size="8" text-anchor="middle">OTLP</text>
+          <text x="1253" y="213.5" class="t-edge-dashed" font-size="8" text-anchor="middle">OTLP</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -6447,8 +6456,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -7907,7 +7919,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -8387,7 +8399,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -8414,7 +8426,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -8695,7 +8707,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -8896,7 +8911,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -8982,7 +8997,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -9098,7 +9113,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

@@ -167,6 +167,15 @@ export function collectLabelRouteClearance({ labels, routedRelations, threshold 
   return hits;
 }
 
+export function minimumLabelRouteClearance(measurements) {
+  if (!asArray(measurements).length) return null;
+  const minimum = measurements.reduce(
+    (value, hit) => Math.min(value, hit.clearance),
+    Infinity,
+  );
+  return Math.round(minimum * 10) / 10;
+}
+
 function relationshipIdentity(relation, relationIndex) {
   if (relation?.key !== undefined) return `key:${relation.key}`;
   if (relation?.id) return `id:${relation.from || ''}\u0000${relation.to || ''}\u0000${relation.id}`;
@@ -1300,6 +1309,16 @@ export function routePointsValue(points) {
     .join(';');
 }
 
+// Only a direct, explicitly authored diagonal needs an artifact-check exception.
+// Nonempty via takes precedence; empty via adds no intermediate geometry.
+export function authoredStraightRouteAttrs(relation, points) {
+  if (relation.route !== 'straight' || relation.via?.length || points.length !== 2) return '';
+  const [start, end] = points;
+  return Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
+    ? ' data-composition-route="straight"'
+    : '';
+}
+
 export function roundedPath(points, radius) {
   if (points.length < 3 || radius <= 0) {
     return polylinePath(points);
@@ -1370,16 +1389,24 @@ export const arrowClassMap = {
   dashed: ['a-dashed', 'arrowhead-dashed']
 };
 
-// Label accent per edge variant. Workflow colors dashed (async trace) labels
-// like the trace store it points at; the other renderers use the bus color.
-export function variantAccent(variant, { dashed = 't-messagebus' } = {}) {
+// Structural phase/group accents retain their existing semantic colors.
+export function variantAccent(variant) {
+  return variant === 'security' ? 't-security'
+    : variant === 'emphasis' ? 't-backend'
+      : variant === 'dashed' ? 't-messagebus' : 't-muted';
+}
+
+// Relationship labels use the same theme token as their path. Keep this map
+// edge-specific: node-kind text colors only coincide with some path colors in
+// the classic preset and must not define the relationship's visual meaning.
+export function edgeLabelAccent(variant) {
   return variant === 'security'
-    ? 't-security'
+    ? 't-edge-security'
     : variant === 'emphasis'
-      ? 't-backend'
+      ? 't-edge-emphasis'
       : variant === 'dashed'
-        ? dashed
-        : 't-muted';
+        ? 't-edge-dashed'
+        : 't-edge-default';
 }
 
 export function formatRect(r) {

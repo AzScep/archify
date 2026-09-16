@@ -171,7 +171,7 @@ test('cli: guide lists all scenario recipes by diagram type', () => {
   const result = run(['guide']);
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Archify scenario recipes \(11\)/);
+  assert.match(result.stdout, /Archify scenario recipes \(12\)/);
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']) {
     assert.match(result.stdout, new RegExp(`\\[${type}\\]`));
   }
@@ -211,6 +211,38 @@ test('cli: guide works from an installed skill without node_modules', () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).recommendation.id, 'incident-runbook');
+});
+
+test('cli: guide returns repair steps, via semantics, and viewport checks as JSON', () => {
+  const result = run(['guide', 'viewport overflow', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.recommendation.id, 'layout-repair');
+  assert.equal(parsed.confidence, 'high');
+  assert.ok(parsed.matchedSignals.includes('viewport overflow'));
+  const prompt = parsed.recommendation.prompt;
+  assert.match(prompt, /schema.*overlap.*direction.*crossings.*labels/s);
+  assert.match(prompt, /\[start, \.\.\.via, end\]/);
+  assert.match(prompt, /absolute.*\[x, y\]/);
+  assert.match(prompt, /1440×900.*1600×1000.*1920×1080.*2048×1320/);
+  assert.match(prompt, /scrollWidth <= window\.innerWidth/);
+  assert.match(prompt, /scrollHeight <= window\.innerHeight/);
+  assert.match(prompt, /validate.*diagnostics\[\].*supportedFixes/);
+});
+
+test('cli: guide prints localized repair advice, including an explicit language override', () => {
+  for (const args of [
+    ['guide', '视口溢出，标签重叠，修复顺序'],
+    ['guide', 'how do via waypoints work', '--lang', 'zh'],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /推荐: 布局修复/);
+    assert.match(result.stdout, /schema.*重叠.*方向.*交叉.*标签/s);
+    assert.match(result.stdout, /\[start, \.\.\.via, end\]/);
+    assert.match(result.stdout, /scrollHeight <= window\.innerHeight/);
+    assert.match(result.stdout, /validate/);
+  }
 });
 
 test('cli: demo creates a ready-to-open diagram in a chosen directory', () => {
@@ -270,6 +302,31 @@ test('cli: visual-check returns a skipped receipt with exit 2 when Chrome is una
   assert.equal(receipt.visualReview, 'pending');
   assert.equal(receipt.chrome.status, 'unavailable');
   assert.equal(fs.existsSync(out.replace(/\.html$/, '.visual-check.json')), true);
+});
+
+test('cli: visual-check --out-dir writes the receipt into that directory, not beside the artifact', () => {
+  const out = path.join(tmp, 'visual-check-outdir.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const missingChrome = path.join(tmp, 'missing-chrome-outdir');
+  const outDir = path.join(tmp, 'visual-check-outdir-evidence');
+  const result = run(['visual-check', out, '--json', '--out-dir', outDir], {
+    env: { ...process.env, ARCHIFY_CHROME: missingChrome },
+  });
+
+  assert.equal(result.status, 2, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.status, 'skipped');
+  assert.equal(fs.existsSync(path.join(outDir, 'visual-check-outdir.visual-check.json')), true);
+  assert.equal(fs.existsSync(out.replace(/\.html$/, '.visual-check.json')), false, 'no receipt should land beside the artifact when --out-dir is set');
+});
+
+test('cli: visual-check rejects --out-dir with no value', () => {
+  const out = path.join(tmp, 'visual-check-outdir-missing-value.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const result = run(['visual-check', out, '--out-dir']);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--out-dir requires a directory path/);
 });
 
 test('cli: visual-check describes human output as automated browser evidence, not visual approval', () => {
@@ -480,10 +537,14 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   const installedCli = path.join(installedRoot, 'bin/archify.mjs');
   const input = path.join(installedRoot, 'examples/web-app.architecture.json');
   const output = path.join(tmp, 'installed-preview.html');
-  const child = spawn(process.execPath, [installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
+  // Windows child.kill() terminates immediately, bypassing the signal handler.
+  const signalRelay = process.platform === 'win32'
+    ? ['--import', 'data:text/javascript,process.once("message", () => { process.disconnect(); process.emit("SIGTERM"); });']
+    : [];
+  const child = spawn(process.execPath, [...signalRelay, installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
     cwd: installedRoot,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe', ...(process.platform === 'win32' ? ['ipc'] : [])],
   });
   let stdout = '';
   let stderr = '';
@@ -510,7 +571,8 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   assert.equal(state.revision, 1);
   assert.equal(fs.existsSync(output), true);
 
-  child.kill('SIGTERM');
+  if (process.platform === 'win32') child.send('stop');
+  else child.kill('SIGTERM');
   const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
   assert.deepEqual(exit, { code: 0, signal: null });
   assert.match(stdout, /stopping preview/);

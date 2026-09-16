@@ -57,7 +57,7 @@ test('browser gate includes dedicated and mixed browser suites and enables them'
   for (const file of files) assert.ok(fs.existsSync(path.join(skillRoot, file)), file);
   const required = [
     ...fs.readdirSync(path.join(skillRoot, 'test')).filter((file) => file.endsWith('-browser.test.mjs')),
-    'repository-evidence.test.mjs', 'i18n.test.mjs', 'semantic-radar.test.mjs', 'viewer-chrome-layout.test.mjs',
+    'sequence-header-clearance.test.mjs', 'repository-evidence.test.mjs', 'i18n.test.mjs', 'semantic-radar.test.mjs', 'viewer-chrome-layout.test.mjs',
   ];
   for (const file of required) assert.ok(files.includes(path.join('test', file)), `${file} must run in the browser gate`);
 });
