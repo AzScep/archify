@@ -133,7 +133,13 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time.
+a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
+validate it together. Architecture/workflow provide layout evidence through
+`validate <type> <candidate.json> --layout-json`; for other types, use validation
+diagnostics and the rendered SVG geometry.
+Before adding manual routes, check whether unnecessary agent-added controls
+disable automatic port spread; preserve user-required route intent. Use the
+measured clearance rules above rather than guessing coordinates.
 
 ### Repair order
 
@@ -160,6 +166,27 @@ progression. Start new workflows on `readable-v2`; retain `fixed-v1` only for
 legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
 edge labels, and route retries and exception returns outside the main lane
 corridor.
+
+#### Workflow viewport repair
+
+When `viewer/viewport-overflow` includes `workflowLanes`, inspect the tallest
+rendered frames and their node span before changing the source. Measurements
+are CSS pixels; space above/below nodes includes lane titles and routing, so it
+is not a removable-space budget. Frame IDs identify rendered lane indices.
+
+Run `validate workflow <source.json> --layout-json` and match those frames to
+source lanes and nodes. Check whether many steps share the last logical column
+and use large `yOffset` values. Readable-v2 currently reserves symmetric space
+around offsets and shares the base content height between lanes, so increasing
+one offset can enlarge otherwise sparse lanes.
+
+Where the source's ownership and explicit geometry permit, redistribute steps
+across logical columns and meaningful lanes, keeping the main path monotonic.
+Preserve every required node, relationship, label and semantic check. If ownership
+or absolute pins prevent reflow, report that constraint instead of merging lanes
+or moving pins automatically. Validate the changed JSON, deliver a fresh HTML,
+then rerun browser checks and inspect the first screen; a static pass alone does
+not settle viewport fit. These are repair directions, not guaranteed coordinates.
 
 ### Sequence
 
