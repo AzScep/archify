@@ -443,8 +443,8 @@ export class ChromeVisualBrowser {
             || bounds.left < rect.left - 1 || bounds.right > rect.right + 1) return null;
           return { id: node.getAttribute('data-node-id'), top: bounds.top, bottom: bounds.bottom };
         }).filter(Boolean);
-        var top = members.length ? Math.min.apply(null, members.map(function (node) { return node.top; })) : null;
-        var bottom = members.length ? Math.max.apply(null, members.map(function (node) { return node.bottom; })) : null;
+        var top = members.length ? members.reduce(function (minimum, node) { return Math.min(minimum, node.top); }, Infinity) : null;
+        var bottom = members.length ? members.reduce(function (maximum, node) { return Math.max(maximum, node.bottom); }, -Infinity) : null;
         return {
           frameId: lane.getAttribute('data-composition-frame-id'),
           heightPx: Math.round(rect.height),

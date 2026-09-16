@@ -133,7 +133,13 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time.
+a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
+validate it together. Architecture/workflow provide layout evidence through
+`validate <type> <candidate.json> --layout-json`; for other types, use validation
+diagnostics and the rendered SVG geometry.
+Before adding manual routes, check whether unnecessary agent-added controls
+disable automatic port spread; preserve user-required route intent. Use the
+measured clearance rules above rather than guessing coordinates.
 
 ### Repair order
 
@@ -210,7 +216,11 @@ proximity or naming alone.
 Declare `meta.repository.url` and one full 40-character `revision`, then attach
 `components[].sources` with repository-relative `path`, optional `line`,
 `end_line`, and `label`. Verification reads blobs at that commit, independently
-of working-tree edits. A matching local origin, available commit, bounded path,
+of working-tree edits. Verification ignores local Git replacement refs, including
+those selected by `GIT_REPLACE_REF_BASE`, and always reads the original objects
+at the pinned SHA. It does not change repository configuration or delete
+replacement refs.
+A matching local origin, available commit, bounded path,
 blob, and valid line range are required in every link mode. Verification is
 local and makes no remote requests; it establishes neither public availability
 nor the current reader's access rights.
