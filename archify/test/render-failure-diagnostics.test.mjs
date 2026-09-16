@@ -9,6 +9,8 @@ import vm from 'node:vm';
 
 const skillRoot = fileURLToPath(new URL('../', import.meta.url));
 const cli = path.join(skillRoot, 'bin/archify.mjs');
+const diagnosticModule = new URL('../renderers/shared/diagnostics.mjs', import.meta.url).href;
+const installBoundary = `import { installRendererDiagnosticBoundary } from ${JSON.stringify(diagnosticModule)}; installRendererDiagnosticBoundary();`;
 const examples = {
   architecture: 'web-app.architecture.json',
   workflow: 'agent-tool-call.workflow.json',
@@ -119,7 +121,7 @@ test('render layout rejection exposes the existing diagnostic and preserves an e
 test('unexpected renderer exceptions keep native debugging information and are not relabelled as input errors', t => {
   const cwd = workspace(t);
   const helper = new URL('../renderers/shared/cli.mjs', import.meta.url).href;
-  const script = `import ${JSON.stringify(helper)}; throw Object.assign(new SyntaxError('implementation defect'), { code: 'EACCES' });`;
+  const script = `${installBoundary} import ${JSON.stringify(helper)}; throw Object.assign(new SyntaxError('implementation defect'), { code: 'EACCES' });`;
   const human = run(['--input-type=module', '-e', script], cwd);
   assert.equal(human.status, 1);
   assert.match(human.stderr, /SyntaxError: implementation defect/);
@@ -154,7 +156,7 @@ test('invalid output arguments keep their implementation error instead of a file
   const cwd = workspace(t);
   const helper = new URL('../renderers/shared/cli.mjs', import.meta.url).href;
   const templatePath = path.join(skillRoot, 'assets/template.html');
-  const script = `import fs from 'node:fs'; import { writeDiagram } from ${JSON.stringify(helper)};
+  const script = `${installBoundary} import fs from 'node:fs'; import { writeDiagram } from ${JSON.stringify(helper)};
     writeDiagram({ outPath: undefined, template: fs.readFileSync(${JSON.stringify(templatePath)}, 'utf8'), diagramType: 'architecture', meta: { title: 'Test' }, svg: '', cards: [] });`;
   const human = run(['--input-type=module', '-e', script], cwd);
   assert.equal(human.status, 1);

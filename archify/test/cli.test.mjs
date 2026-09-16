@@ -155,6 +155,18 @@ test('cli: examples renders from an installed skill', () => {
   }
 });
 
+test('cli: argument-free commands reject trailing arguments', () => {
+  for (const command of ['examples', 'doctor']) {
+    const extra = run([command, 'ignored-extra']);
+    assert.equal(extra.status, 2, command);
+    assert.match(extra.stderr, /Usage:/, command);
+
+    const unknown = run([command, '--bogus']);
+    assert.equal(unknown.status, 2, command);
+    assert.match(unknown.stderr, new RegExp(`Unknown ${command} option "--bogus"`), command);
+  }
+});
+
 test('cli: guide lists all scenario recipes by diagram type', () => {
   const result = run(['guide']);
 
@@ -221,6 +233,17 @@ test('cli: demo defaults to the current directory', () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(fs.existsSync(path.join(workingDirectory, 'archify-demo.html')), true);
+});
+
+test('cli: demo rejects a mistyped option without creating an output directory', () => {
+  const workingDirectory = path.join(tmp, 'demo-option-guard');
+  fs.mkdirSync(workingDirectory);
+
+  const result = run(['demo', '--typo'], { cwd: workingDirectory });
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Unknown demo option "--typo"/);
+  assert.deepEqual(fs.readdirSync(workingDirectory), []);
 });
 
 test('cli: render writes a diagram html file', () => {
@@ -457,10 +480,14 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   const installedCli = path.join(installedRoot, 'bin/archify.mjs');
   const input = path.join(installedRoot, 'examples/web-app.architecture.json');
   const output = path.join(tmp, 'installed-preview.html');
-  const child = spawn(process.execPath, [installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
+  // Windows child.kill() terminates immediately, bypassing the signal handler.
+  const signalRelay = process.platform === 'win32'
+    ? ['--import', 'data:text/javascript,process.once("message", () => { process.disconnect(); process.emit("SIGTERM"); });']
+    : [];
+  const child = spawn(process.execPath, [...signalRelay, installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
     cwd: installedRoot,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe', ...(process.platform === 'win32' ? ['ipc'] : [])],
   });
   let stdout = '';
   let stderr = '';
@@ -487,7 +514,8 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   assert.equal(state.revision, 1);
   assert.equal(fs.existsSync(output), true);
 
-  child.kill('SIGTERM');
+  if (process.platform === 'win32') child.send('stop');
+  else child.kill('SIGTERM');
   const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
   assert.deepEqual(exit, { code: 0, signal: null });
   assert.match(stdout, /stopping preview/);
@@ -620,6 +648,20 @@ test('cli: check validates rendered html', () => {
   const result = run(['check', out]);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /"ok": true/);
+});
+
+test('cli: check rejects unknown options and extra positionals', () => {
+  const out = path.join(tmp, 'workflow-check-args.html');
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  assert.equal(run(['render', 'workflow', input, out]).status, 0);
+
+  const unknown = run(['check', '--json', out]);
+  assert.equal(unknown.status, 2);
+  assert.match(unknown.stderr, /Unknown check option "--json"/);
+
+  const extra = run(['check', out, 'ignored-extra']);
+  assert.equal(extra.status, 2);
+  assert.match(extra.stderr, /Usage:/);
 });
 
 test('cli: validate emits structured json without keeping html output', () => {
