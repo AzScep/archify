@@ -56,10 +56,11 @@ function screenshotKey(width, height, theme) {
   return `${width}x${height}:${theme}`;
 }
 
-export function sidecarPaths(artifactPath) {
+export function sidecarPaths(artifactPath, { outDir } = {}) {
   const artifact = path.resolve(artifactPath);
-  const stem = artifact.replace(/\.html?$/i, '');
-  const base = `${stem}.visual-check`;
+  const stem = path.basename(artifact).replace(/\.html?$/i, '');
+  const directory = outDir ? path.resolve(outDir) : path.dirname(artifact);
+  const base = path.join(directory, `${stem}.visual-check`);
   const screenshots = CAPTURE_VIEWPORTS.flatMap(({ width, height }) => THEMES.map((theme) => ({
     width,
     height,
@@ -714,6 +715,8 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     viewerChrome: { status: 'fail', viewports: [] },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: {
+      ...(path.dirname(outputs.receipt) !== path.dirname(artifactPath)
+        ? { directory: path.dirname(outputs.receipt) } : {}),
       receipt: path.basename(outputs.receipt),
       contactSheet: path.basename(outputs.contactSheet),
     },
@@ -726,6 +729,7 @@ function persistReceipt(outputs, receipt) {
 
 export async function runVisualCheck({
   artifactPath,
+  outDir,
   chromePath,
   resolveChrome = findChrome,
   browserFactory = async (resolvedChrome) => new ChromeVisualBrowser(resolvedChrome),
@@ -734,7 +738,8 @@ export async function runVisualCheck({
   const artifact = path.resolve(artifactPath);
   if (!/\.html?$/i.test(artifact)) throw new Error('visual-check requires an .html artifact.');
   const artifactBytes = fs.readFileSync(artifact);
-  const outputs = sidecarPaths(artifact);
+  const outputs = sidecarPaths(artifact, { outDir });
+  fs.mkdirSync(path.dirname(outputs.receipt), { recursive: true });
   cleanupCaptureSidecars(outputs);
   safeUnlink(outputs.receipt);
 
