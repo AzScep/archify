@@ -32,7 +32,7 @@ import {
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const nodeTextFit = {
@@ -412,7 +412,7 @@ function renderFlowLabel(flow, index) {
     : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
         </g>`;
 }
 

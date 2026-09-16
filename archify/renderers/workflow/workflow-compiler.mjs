@@ -54,7 +54,8 @@ import {
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent
+  variantAccent,
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const LEGACY_COLUMN_CENTERS = Object.freeze([88, 220, 300, 430, 500, 625]);
@@ -4226,7 +4227,7 @@ function renderEdgeLabel(edge, index) {
   const labelW = workflowLabelWidth(edge.label);
   return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
         </g>`;
 }
 

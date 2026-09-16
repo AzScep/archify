@@ -264,7 +264,7 @@ test('fixed-v1 compiler preserves the official workflow baseline SVG byte-for-by
   assert.equal(result.receipt.contract, 'fixed-v1');
   assert.equal(
     sha256(result.svg),
-    '8147f7ff3e41c4aa968cea637645c85ec51ca0160503828a973b620dc62e3aaa',
+    '999c771664307079c5dd65deff996d5f172d70780a5ab3bcb6e49cb718549018',
   );
 });
 

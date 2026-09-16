@@ -1389,10 +1389,17 @@ export const arrowClassMap = {
   dashed: ['a-dashed', 'arrowhead-dashed']
 };
 
+// Structural phase/group accents retain their existing semantic colors.
+export function variantAccent(variant) {
+  return variant === 'security' ? 't-security'
+    : variant === 'emphasis' ? 't-backend'
+      : variant === 'dashed' ? 't-messagebus' : 't-muted';
+}
+
 // Relationship labels use the same theme token as their path. Keep this map
 // edge-specific: node-kind text colors only coincide with some path colors in
 // the classic preset and must not define the relationship's visual meaning.
-export function variantAccent(variant) {
+export function edgeLabelAccent(variant) {
   return variant === 'security'
     ? 't-edge-security'
     : variant === 'emphasis'

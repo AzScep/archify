@@ -108,3 +108,15 @@ test('edge path and label classes resolve to the same theme token', () => {
     assert.equal(labelMatch[1], pathMatch[1], variant);
   }
 });
+
+
+test('workflow phase and group accents keep their semantic colors', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const output = path.join(tmp, 'workflow-structure.html');
+  const result = spawnSync(process.execPath, [cli, 'render', 'workflow', input, output], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(output, 'utf8');
+  for (const label of ['Execute + report', 'Evidence path', 'Tool work']) {
+    assert.match(html, new RegExp('<text[^>]*class="t-messagebus"[^>]*>' + escapePattern(label) + '</text>'));
+  }
+});

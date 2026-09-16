@@ -40,7 +40,7 @@ import {
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent,
+  edgeLabelAccent,
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
@@ -975,7 +975,7 @@ function renderConnectionLabel(conn, index) {
   const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
           <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
