@@ -45,8 +45,8 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Verify packaged examples and Reader Layout boundaries in a real browser
-        run: node --test test/desktop-reader-browser.test.mjs test/reader-layout-browser.test.mjs
+      - name: Verify packaged examples, Reader Layout and sequence header clearance
+        run: node --test --test-concurrency=2 test/desktop-reader-browser.test.mjs test/reader-layout-browser.test.mjs test/sequence-header-clearance.test.mjs
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
