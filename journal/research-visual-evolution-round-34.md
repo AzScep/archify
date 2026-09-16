@@ -71,7 +71,7 @@ when more than one SVG element represents the same relationship
 The Round 34 audit artifact contains 11 unique authored relationships and zero
 focusable/direct edge targets. Nodes are already focusable buttons, so this is a
 measured interaction asymmetry rather than a speculative feature gap
-([current workflow gallery artifact](gallery/artifacts/agent-tool-call.workflow.html),
+([current workflow gallery artifact](../docs/gallery/artifacts/agent-tool-call.workflow.html),
 [shared node accessibility helper](../archify/renderers/shared/cli.mjs)).
 
 The duplication matters. An edge can have a primary path plus a separate label
@@ -80,7 +80,7 @@ group containing multiple line/path shapes. A direct interaction layer therefore
 must de-duplicate by `data-edge-key` and derive geometry from the primary edge
 shape; it must not turn every matching label/detail element into a separate focus
 stop
-([current generated gallery artifact](gallery/artifacts/agent-tool-call.workflow.html),
+([current generated gallery artifact](../docs/gallery/artifacts/agent-tool-call.workflow.html),
 [current relationship geometry helper](../archify/assets/template.html)).
 
 ### The explanation surface already exists

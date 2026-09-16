@@ -219,8 +219,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "c6ad05b9e1852f1dd68c8c076e03d026f00ad8edcfe7fbd186f82b73db923aae",
-    "bytes": 2215875
+    "sha256": "718fa5f08befa088ae9ecbcc00e0c0a1109347305173cb1df5413b282247c834",
+    "bytes": 2218492
   },
   "validation": {
     "checksPassed": 28,

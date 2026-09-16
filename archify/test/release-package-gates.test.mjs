@@ -170,7 +170,7 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
   const job = workflowJob(workflow, 'deploy-pages');
   assert.match(job, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
-  assert.match(job, /needs: \[test, webm-artifact, zip-freshness, published-update-manifest, package-smoke\]/);
+  assert.match(job, /needs: \[test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability\]/);
   assert.match(job, /pages: write/);
   assert.match(job, /id-token: write/);
   assert.match(job, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/ref\/heads\/main/);
@@ -414,10 +414,7 @@ canonicalZipTest('built archives contain the embedded notifier runtime', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-notifier-package-gate-'));
   try {
     const archive = path.join(fixture, 'archify.zip');
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });
