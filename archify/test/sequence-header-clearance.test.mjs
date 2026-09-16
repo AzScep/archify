@@ -13,8 +13,9 @@ const testDir=path.dirname(fileURLToPath(import.meta.url));
 // Public synthetic labels deliberately exercise a maximum-width participant.
 // This fixture carries no application-specific source or private repository.
 test('sequence headers reserve an icon/brand rail without shrinking or changing literal labels', async t=>{
+  if(!process.env.ARCHIFY_CHROME){t.skip('Set ARCHIFY_CHROME to run the real browser regression.');return;}
   const chrome=findChrome();
-  if(!chrome){t.skip('Chrome is unavailable; this is not a browser pass');return;}
+  assert.ok(chrome,'The configured browser regression requires Chrome.');
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-sequence-header-'));
   const spec={schema_version:1,diagram_type:'sequence',meta:{title:'Sequence header clearance regression',quality_profile:'standard',column_fit:'spread',viewBox:[1700,600]},participants:[
     {id:'transfer',type:'backend',label:'Cloud File Transfer (CFTS)',sublabel:'Transfer participant'},
