@@ -25,7 +25,7 @@ Archify is a Node.js rendering and validation system for Cursor, Claude Code, Co
 
 **Current development version:** `v2.17.0-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
-**[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+**[Project](https://tt-a1i.github.io/archify/)** · **[Guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)** · **[X](https://x.com/t20000622yy)**
 
 ```bash
 npx skills add tt-a1i/archify -g
@@ -38,8 +38,11 @@ Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archif
 ## ❤️ Sponsors
 
 <table>
-  <tr><td align="center" width="240"><a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA" width="200" /></a><br/><strong><a href="https://apinebula.ai/ref/wywnaATT">APINEBULA</a></strong></td><td>APINEBULA sponsors Archify with one API for Claude, GPT, Gemini, and more. <a href="https://apinebula.ai/ref/wywnaATT">Register through Archify</a> and use <strong><code>Archify</code></strong> for <strong>10% off</strong>.</td></tr>
-  <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
+<tr>
+  <td align="center" width="240"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="200"/></a><br/><strong><a href="https://supercode.sh/?utm_source=archify">supercode.sh</a></strong></td>
+<td><a href="https://supercode.sh/?utm_source=archify">Supercode</a> sponsors Archify and enhances Codex and Cursor with token optimization, curated Skills, and spec-driven development. Archify is featured as a <a href="https://supercode.sh/en/skills/tt-a1i/archify/archify">Supercode Editor’s Choice</a> skill.<br/><br/><a href="https://supercode.sh/en/skills/tt-a1i/archify/archify"><img src="https://supercode.sh/badges/editors-choice.svg" alt="Supercode Editor’s Choice — Archify" width="240" height="55"/></a></td>
+</tr>
+<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
 </table>
 
 > Want to sponsor Archify? [Contact us by email.](mailto:2801884530@qq.com)
@@ -137,13 +140,13 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 
 ## Choose the right diagram
 
-| Type | Best for | Include in your prompt |
+| Type | Copyable prompt | Example |
 |---|---|---|
-| **Architecture** | Components, services, storage, boundaries | Scope, core components, primary path |
-| **Workflow** | CI/CD, approvals, tool calls, runbooks | Participants, order, branches, exceptions |
-| **Sequence** | API calls, cache fallback, auth, async traces | Callers, callees, returns, timing |
-| **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
-| **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
+| **Architecture** | `Map runtime components, boundaries, and primary path with Archify.` | [Production deployment](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html) |
+| **Workflow** | `Map participants, branches, approvals, and retries with Archify.` | [Agent tool-call workflow](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html) |
+| **Sequence** | `Map API request, responses, and failure paths with Archify.` | [Async job round trip](https://tt-a1i.github.io/archify/gallery/artifacts/async-job-roundtrip.sequence.html) |
+| **Data Flow** | `Map sources, transforms, stores, and boundaries with Archify.` | [Event stream dataflow](https://tt-a1i.github.io/archify/gallery/artifacts/event-stream.dataflow.html) |
+| **Lifecycle** | `Map states, events, retries, and terminal outcomes with Archify.` | [Agent run lifecycle](https://tt-a1i.github.io/archify/gallery/artifacts/agent-run.lifecycle.html) |
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
 
