@@ -35,7 +35,7 @@ test('plugin is skill-only and does not declare native tools', () => {
   assert.match(init, /HERMES_HOME/);
 });
 
-test('register() resolves the in-repo Skill without a packed copy', () => {
+test('register() registers the in-repo Skill without a packed copy', () => {
   const result = spawnSync('python3', ['-c', `
 import importlib.util
 from pathlib import Path
@@ -47,6 +47,12 @@ resolved = mod.resolve_skill_md()
 print(resolved)
 assert resolved.name == 'SKILL.md'
 assert resolved.parent.name == 'archify'
+from types import SimpleNamespace
+calls = []
+mod.register(SimpleNamespace(register_skill=lambda *args, **kw: calls.append((args, kw))))
+assert len(calls) == 1
+assert calls[0][0] == ('archify', resolved)
+assert calls[0][1]['description']
 `], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(path.resolve(result.stdout.trim()), path.join(repoRoot, 'archify', 'SKILL.md'));
@@ -92,4 +98,37 @@ test('Archify core does not import or branch on Hermes Agent', () => {
   ], { cwd: repoRoot, encoding: 'utf8' });
   assert.equal(grep.status, 1, grep.stderr || grep.stdout);
   assert.equal(grep.stdout.trim(), '');
+});
+
+
+test('standalone plugin resolves configured homes and fails when no Skill exists', () => {
+  const result = spawnSync('python3', ['-c', `
+import importlib.util, os, shutil, tempfile
+from pathlib import Path
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    plugin = root / 'plugin' / '__init__.py'
+    plugin.parent.mkdir()
+    shutil.copyfile(${JSON.stringify(path.join(integrationRoot, '__init__.py'))}, plugin)
+    os.environ['HERMES_HOME'] = str(root / 'home')
+    os.environ.pop('ARCHIFY_SKILL_ROOT', None)
+    spec = importlib.util.spec_from_file_location('isolated_archify', plugin)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    try:
+        mod.resolve_skill_md()
+        raise AssertionError('missing Skill must fail')
+    except FileNotFoundError:
+        pass
+    home_skill = root / 'home' / 'skills' / 'archify' / 'SKILL.md'
+    home_skill.parent.mkdir(parents=True)
+    home_skill.write_text('home skill')
+    assert mod.resolve_skill_md() == home_skill
+    explicit = root / 'explicit'
+    explicit.mkdir()
+    (explicit / 'SKILL.md').write_text('configured skill')
+    os.environ['ARCHIFY_SKILL_ROOT'] = str(explicit)
+    assert mod.resolve_skill_md() == explicit / 'SKILL.md'
+`], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
 });

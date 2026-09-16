@@ -29,18 +29,21 @@ If `hermes skills inspect skills-sh/tt-a1i/archify/archify` cannot resolve the i
 
 ### Local checkout (this branch)
 
-Replace the source path with your checkout.
+Replace the source path with your checkout. If the destination already exists, inspect it before replacing it; these commands intentionally leave an existing installation in place. Windows symlink creation requires the relevant system permission.
 
 Linux / macOS:
 
 ```bash
-ln -sfn /absolute/path/to/archify/archify ~/.hermes/skills/archify
+mkdir -p ~/.hermes/skills
+[ ! -e ~/.hermes/skills/archify ] && [ ! -L ~/.hermes/skills/archify ] && \
+  ln -s /absolute/path/to/archify/archify ~/.hermes/skills/archify
 ```
 
 Windows PowerShell:
 
 ```powershell
-New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.hermes\skills\archify" -Target "C:\absolute\path\to\archify\archify"
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.hermes\skills" | Out-Null
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.hermes\skills\archify" -Target "C:\absolute\path\to\archify\archify"
 ```
 
 ### Docker
@@ -54,14 +57,17 @@ Plugin skills are opt-in (`skill_view("archify:archify")`) and are not listed in
 Linux / macOS:
 
 ```bash
-ln -sfn /absolute/path/to/archify/integrations/hermes-agent ~/.hermes/plugins/archify
+mkdir -p ~/.hermes/plugins
+[ ! -e ~/.hermes/plugins/archify ] && [ ! -L ~/.hermes/plugins/archify ] && \
+  ln -s /absolute/path/to/archify/integrations/hermes-agent ~/.hermes/plugins/archify
 hermes plugins enable archify
 ```
 
 Windows PowerShell:
 
 ```powershell
-New-Item -ItemType SymbolicLink -Force -Path "$env:USERPROFILE\.hermes\plugins\archify" -Target "C:\absolute\path\to\archify\integrations\hermes-agent"
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.hermes\plugins" | Out-Null
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.hermes\plugins\archify" -Target "C:\absolute\path\to\archify\integrations\hermes-agent"
 hermes plugins enable archify
 ```
 
@@ -92,5 +98,5 @@ Remove-Item "$env:USERPROFILE\.hermes\plugins\archify"
 ## Scope
 
 - Compatible with Hermes directory plugins (`plugin.yaml` + `register(ctx)`).
-- Does not add Archify to the Cursor / Codex / Claude Code / OpenCode agent switcher.
+- Does not add Archify to the Cursor / Codex / Claude Code / OpenCode / GitHub Copilot agent switcher.
 - Does not claim merge safety, blast radius, or live-infrastructure verification.
